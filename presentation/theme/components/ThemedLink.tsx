@@ -1,8 +1,10 @@
 import { Link, LinkProps } from 'expo-router';
-
 import { useThemeColor } from '../hooks/useThemeColor';
 
-interface Props extends LinkProps<string | object> {}
+// Especificar el tipo de LinkProps de manera más precisa
+interface Props extends LinkProps {
+  style?: object;
+}
 
 const ThemedLink = ({ style, ...rest }: Props) => {
   const primaryColor = useThemeColor({}, 'primary');
@@ -19,4 +21,5 @@ const ThemedLink = ({ style, ...rest }: Props) => {
     />
   );
 };
+
 export default ThemedLink;

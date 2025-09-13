@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   ScrollView,
   useWindowDimensions,
@@ -59,9 +60,21 @@ const LoginScreen = () => {
       >
         <View
           style={{
-            paddingTop: height * 0.35,
+            paddingTop: height * 0.15,
+            alignItems: 'center',
+            marginBottom: 20,
           }}
         >
+          {/* Logo de MediSupply */}
+          <Image
+            source={require('@/assets/images/LogoPrincipal.png')}
+            style={{
+              width: 526,
+              height: 100,
+              resizeMode: 'contain',
+              marginBottom: 30,
+            }}
+          />
           <ThemedText type="title">Ingresar</ThemedText>
           <ThemedText style={{ color: 'grey' }}>
             Por favor ingrese para continuar
