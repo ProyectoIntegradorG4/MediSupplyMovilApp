@@ -1,0 +1,96 @@
+# ================================================
+# Docker Compose para Desarrollo - MediSupply App
+# Configuración unificada para desarrollo local
+# ================================================
+
+services:
+  # Servicio principal de desarrollo
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: medisupply-dev-app
+    ports:
+      - "19006:19006"    # Web development server
+      - "8081:8081"      # Metro bundler
+      - "19000:19000"    # Expo DevTools
+      - "19001:19001"    # iOS Simulator
+      - "19002:19002"    # Android Emulator
+    environment:
+      - NODE_ENV=development
+      - EXPO_PUBLIC_STAGE=dev
+      # Variables centralizadas para mayor flexibilidad
+      - LOCAL_IP=192.168.5.107
+      - API_PORT=3000
+      - EXPO_PUBLIC_API_URL=http://localhost:3000/api
+      - EXPO_PUBLIC_API_URL_ANDROID=http://192.168.5.107:3000/api
+      - EXPO_PUBLIC_API_URL_IOS=http://192.168.5.107:3000/api
+      - EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+      - EXPO_DEBUG=true
+      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.5.107
+      - EXPO_PACKAGER_HOST=192.168.5.107
+    volumes:
+      # Montar código fuente para hot reload
+      - .:/app:cached
+      # Evitar sincronizar node_modules
+      - /app/node_modules
+      # Cache de Expo para mejor performance
+      - expo-cache:/home/expo/.expo
+    networks:
+      medisupply-dev:
+        ipv4_address: 172.23.0.10
+    restart: unless-stopped
+    stdin_open: true    # Para interacción con el contenedor
+    tty: true          # Para colorear output
+
+  # API Mock para desarrollo (opcional)
+  # Usar con: docker-compose up --profile api
+  mock-api:
+    image: wiremock/wiremock:2.35.0
+    container_name: medisupply-mock-api
+    ports:
+      - "3000:8080"
+    volumes:
+      - ./docker/wiremock:/home/wiremock
+    networks:
+      medisupply-dev:
+        ipv4_address: 172.23.0.20
+    restart: unless-stopped
+    profiles: ["api"]  # Solo iniciar con --profile api
+    command: ["--global-response-templating", "--verbose"]
+
+networks:
+  medisupply-dev:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.23.0.0/16
+          gateway: 172.23.0.1
+
+volumes:
+  expo-cache:
+    driver: local
+
+# ================================================
+# COMANDOS ÚTILES PARA DESARROLLO:
+# ================================================
+# 
+# Iniciar solo la app:
+#   docker-compose up app
+# 
+# Iniciar app + API mock:
+#   docker-compose --profile api up
+# 
+# Rebuild y iniciar:
+#   docker-compose up --build
+# 
+# Ver logs:
+#   docker-compose logs -f app
+# 
+# Parar todo:
+#   docker-compose down
+# 
+# Limpiar todo (containers, networks, volumes):
+#   docker-compose down -v --remove-orphans
+# ================================================

@@ -1,0 +1,47 @@
+{
+    "request": {
+        "method": "GET",
+        "url": "/api/products"
+    },
+    "response": {
+        "status": 200,
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "jsonBody": {
+            "success": true,
+            "data": [
+                {
+                    "id": 1,
+                    "name": "Acetaminofén 500mg",
+                    "description": "Analgésico y antipirético",
+                    "price": 5.99,
+                    "stock": 100,
+                    "category": "Medicamentos"
+                },
+                {
+                    "id": 2,
+                    "name": "Ibuprofeno 400mg",
+                    "description": "Antiinflamatorio no esteroideo",
+                    "price": 8.50,
+                    "stock": 75,
+                    "category": "Medicamentos"
+                },
+                {
+                    "id": 3,
+                    "name": "Termómetro Digital",
+                    "description": "Termómetro digital con pantalla LCD",
+                    "price": 25.00,
+                    "stock": 50,
+                    "category": "Equipos Médicos"
+                }
+            ],
+            "pagination": {
+                "page": 1,
+                "limit": 10,
+                "total": 3,
+                "totalPages": 1
+            }
+        }
+    }
+}
