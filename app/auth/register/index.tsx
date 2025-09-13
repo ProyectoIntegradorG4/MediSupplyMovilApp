@@ -1,3 +1,4 @@
+import { validateForm } from '@/helpers/validation';
 import ThemedButton from '@/presentation/theme/components/ThemedButton';
 import ThemedLink from '@/presentation/theme/components/ThemedLink';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
@@ -5,6 +6,7 @@ import ThemedTextInput from '@/presentation/theme/components/ThemedTextInput';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
 import { useState } from 'react';
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -24,31 +26,46 @@ const RegisterScreen = () => {
     nit: '', // Campo NIT para clientes institucionales
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const onRegister = async () => {
-    const { username, email, password, nit } = form;
+    setIsLoading(true);
+    setFieldErrors({});
 
-    // === MOSTRAR CONFIGURACIÓN USANDO VARIABLES DE ENTORNO ===
-    // logConfig(); // Función que muestra toda la configuración
+    // === VALIDACIÓN COMPLETA DEL FORMULARIO ===
+    const validation = validateForm(form);
 
-    // === VALIDACIÓN DE CAMPOS ===
     console.log('=== DATOS DEL FORMULARIO ===');
-    console.log({ username, email, password, nit });
+    console.log({ ...form, password: '***' });
+    console.log('=== VALIDACIONES ===');
+    console.log(validation);
 
-    const hasEmptyFields = username.length === 0 || email.length === 0 || password.length === 0 || nit.length === 0;
+    if (!validation.isValid) {
+      // Mostrar errores específicos por campo
+      const errors: Record<string, string> = {};
+      Object.entries(validation.validations).forEach(([field, result]) => {
+        if (!result.isValid) {
+          errors[field] = result.message;
+        }
+      });
 
-    if (hasEmptyFields) {
-      console.log('❌ Faltan campos por completar');
+      setFieldErrors(errors);
+      setIsLoading(false);
+
+      // Mostrar alerta general
+      Alert.alert(
+        'Formulario incompleto',
+        'Por favor corrige los errores marcados en el formulario',
+        [{ text: 'Entendido', style: 'default' }]
+      );
       return;
     }
 
-    console.log('✅ Todos los campos están completos');
+    console.log('✅ Todos los campos son válidos');
     console.log('📱 Plataforma:', Platform.OS);
 
-    // === SIMULACIÓN DE REGISTRO ===
-    console.log('=== SIMULANDO REGISTRO ===');
-    console.log('📋 Datos a enviar:', { username, email, nit, password: '***' });
-
-    // Aquí iría tu lógica de registro real
+    // Aquí lógica de registro real
     /*
     try {
       const response = await fetch(`${CONFIG.API.BASE_URL}/auth/register`, {
@@ -65,6 +82,40 @@ const RegisterScreen = () => {
       console.error('❌ Error al registrar:', error);
     }
     */
+
+    // === SIMULACIÓN DE REGISTRO ===
+    try {
+      console.log('=== SIMULANDO REGISTRO ===');
+      console.log('📋 Datos a enviar:', {
+        username: form.username,
+        email: form.email,
+        nit: form.nit,
+        password: '***'
+      });
+
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Simular éxito
+      Alert.alert(
+        '🎉 Registro exitoso',
+        `Bienvenido ${form.username}!\nTu cuenta institucional ha sido creada con el NIT ${form.nit}`,
+        [{ text: 'Continuar', style: 'default' }]
+      );
+
+      // Limpiar formulario
+      setForm({ username: '', email: '', password: '', nit: '' });
+
+    } catch (error) {
+      console.error('❌ Error al registrar:', error);
+      Alert.alert(
+        'Error de registro',
+        'Hubo un problema al crear tu cuenta. Por favor intenta nuevamente.',
+        [{ text: 'Reintentar', style: 'default' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -106,7 +157,14 @@ const RegisterScreen = () => {
             autoCapitalize="words"
             icon="person-outline"
             value={form.username}
-            onChangeText={(text) => setForm({ ...form, username: text })}
+            onChangeText={(text) => {
+              setForm({ ...form, username: text });
+              // Limpiar error cuando el usuario empiece a escribir
+              if (fieldErrors.username) {
+                setFieldErrors({ ...fieldErrors, username: '' });
+              }
+            }}
+            error={fieldErrors.username}
           />
 
           <ThemedTextInput
@@ -115,7 +173,13 @@ const RegisterScreen = () => {
             autoCapitalize="none"
             icon="mail-outline"
             value={form.email}
-            onChangeText={(text) => setForm({ ...form, email: text })}
+            onChangeText={(text) => {
+              setForm({ ...form, email: text });
+              if (fieldErrors.email) {
+                setFieldErrors({ ...fieldErrors, email: '' });
+              }
+            }}
+            error={fieldErrors.email}
           />
 
           <ThemedTextInput
@@ -124,7 +188,13 @@ const RegisterScreen = () => {
             autoCapitalize="none"
             icon="business-outline"
             value={form.nit}
-            onChangeText={(text) => setForm({ ...form, nit: text })}
+            onChangeText={(text) => {
+              setForm({ ...form, nit: text });
+              if (fieldErrors.nit) {
+                setFieldErrors({ ...fieldErrors, nit: '' });
+              }
+            }}
+            error={fieldErrors.nit}
           />
 
           <ThemedTextInput
@@ -133,7 +203,13 @@ const RegisterScreen = () => {
             autoCapitalize="none"
             icon="lock-closed-outline"
             value={form.password}
-            onChangeText={(text) => setForm({ ...form, password: text })}
+            onChangeText={(text) => {
+              setForm({ ...form, password: text });
+              if (fieldErrors.password) {
+                setFieldErrors({ ...fieldErrors, password: '' });
+              }
+            }}
+            error={fieldErrors.password}
           />
         </View>
 
@@ -144,7 +220,8 @@ const RegisterScreen = () => {
         <ThemedButton
           icon="arrow-forward-outline"
           onPress={onRegister}
-        >Crear cuenta
+        >
+          Crear cuenta
         </ThemedButton>
 
         {/* Spacer */}
