@@ -1,4 +1,6 @@
-import { validateForm } from '@/helpers/validation';
+import { CONFIG } from '@/constants/config';
+import { APIValidationError, formatUserServiceErrors, formatValidationErrors, registerUser, UserServiceError } from '@/core/auth/api/authApi';
+import { mapFormToApiData, validateForm } from '@/helpers/validation';
 import ThemedButton from '@/presentation/theme/components/ThemedButton';
 import ThemedLink from '@/presentation/theme/components/ThemedLink';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
@@ -18,6 +20,9 @@ import {
 const RegisterScreen = () => {
   const { height } = useWindowDimensions();
   const backgroundColor = useThemeColor({}, 'background');
+  
+  // Log de configuración para debugging
+  console.log('🔧 CONFIG.API.BASE_URL:', CONFIG.API.BASE_URL);
 
   const [form, setForm] = useState({
     username: '',
@@ -65,54 +70,141 @@ const RegisterScreen = () => {
     console.log('✅ Todos los campos son válidos');
     console.log('📱 Plataforma:', Platform.OS);
 
-    // Aquí lógica de registro real
-    /*
+    // === REGISTRO REAL CON API ===
     try {
-      const response = await fetch(`${CONFIG.API.BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password, nit }),
-      });
+      // Convertir datos del formulario al formato de la API
+      const apiData = mapFormToApiData(form);
       
-      const result = await response.json();
-      console.log('✅ Registro exitoso:', result);
-    } catch (error) {
-      console.error('❌ Error al registrar:', error);
-    }
-    */
-
-    // === SIMULACIÓN DE REGISTRO ===
-    try {
-      console.log('=== SIMULANDO REGISTRO ===');
+      console.log('=== ENVIANDO REGISTRO A API ===');
+      console.log('🌐 URL de la API:', CONFIG.API.BASE_URL);
       console.log('📋 Datos a enviar:', {
-        username: form.username,
-        email: form.email,
-        nit: form.nit,
-        password: '***'
+        ...apiData,
+        password: '***' // No logear la contraseña
       });
 
-      // Simular delay de red
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Llamar a la API de registro
+      const response = await registerUser(apiData);
+      
+      console.log('✅ Registro exitoso:', response);
 
-      // Simular éxito
+      // Mostrar mensaje de éxito
       Alert.alert(
         '🎉 Registro exitoso',
-        `Bienvenido ${form.username}!\nTu cuenta institucional ha sido creada con el NIT ${form.nit}`,
+        response.mensaje || `¡Bienvenido ${form.username}!\nTu cuenta institucional ha sido creada con el NIT ${form.nit}`,
         [{ text: 'Continuar', style: 'default' }]
       );
 
       // Limpiar formulario
       setForm({ username: '', email: '', password: '', nit: '' });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error al registrar:', error);
-      Alert.alert(
-        'Error de registro',
-        'Hubo un problema al crear tu cuenta. Por favor intenta nuevamente.',
-        [{ text: 'Reintentar', style: 'default' }]
-      );
+      
+      try {
+        if (error.response?.data) {
+        const errorData = error.response.data;
+        
+        // Manejar errores del servicio de usuarios - puede venir en formato {"detail": {...}} o directo
+        const userServiceError = errorData.detail || errorData;
+        
+        if (userServiceError.error && userServiceError.detalles) {
+          const apiFieldErrors = formatUserServiceErrors(userServiceError);
+          
+          setFieldErrors(apiFieldErrors);
+          
+          // Mostrar mensaje específico según el tipo de error
+          let alertTitle = 'Error de registro';
+          let alertMessage = 'Por favor corrige los errores marcados en el formulario';
+          
+          switch (userServiceError.error) {
+            case 'Reglas de negocio fallidas':
+              alertTitle = 'Validación de datos';
+              alertMessage = 'Los datos ingresados no cumplen con las reglas de negocio';
+              break;
+            case 'NIT no autorizado':
+              alertTitle = 'NIT no válido';
+              alertMessage = 'El NIT ingresado no está autorizado para registro';
+              break;
+            case 'Usuario ya existe':
+              alertTitle = 'Usuario existente';
+              alertMessage = 'Ya existe una cuenta con este correo electrónico';
+              break;
+            default:
+              alertMessage = userServiceError.detalles?.message || alertMessage;
+          }
+          
+          Alert.alert(alertTitle, alertMessage, [{ text: 'Entendido', style: 'default' }]);
+        }
+        // Manejar errores de validación de FastAPI (422)
+        else if (error.response?.status === 422 && errorData.detail) {
+          const validationError = errorData as APIValidationError;
+          const apiFieldErrors = formatValidationErrors(validationError.detail);
+          
+          // Mapear errores de API a campos del formulario
+          const mappedErrors: Record<string, string> = {};
+          Object.entries(apiFieldErrors).forEach(([apiField, message]) => {
+            // Mapear 'nombre' de la API a 'username' del formulario
+            const formField = apiField === 'nombre' ? 'username' : apiField;
+            mappedErrors[formField] = message;
+          });
+          
+          setFieldErrors(mappedErrors);
+          
+          Alert.alert(
+            'Errores de validación',
+            'Por favor corrige los errores marcados en el formulario',
+            [{ text: 'Entendido', style: 'default' }]
+          );
+        }
+        else {
+          // Otros errores con estructura diferente
+          let errorMessage = 'Hubo un problema al crear tu cuenta. Por favor intenta nuevamente.';
+          
+          // Intentar extraer mensaje de error de diferentes estructuras posibles
+          if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.detail && typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else if (errorData.detail && errorData.detail.message) {
+            errorMessage = errorData.detail.message;
+          }
+          
+          Alert.alert(
+            'Error de registro',
+            errorMessage,
+            [{ text: 'Reintentar', style: 'default' }]
+          );
+        }
+      } else {
+        // Errores de red u otros errores sin respuesta
+        let errorMessage = 'Hubo un problema de conexión. Por favor intenta nuevamente.';
+        
+        // Personalizar mensaje según el tipo de error
+        if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+          errorMessage = 'No se pudo conectar al servidor. Verifica tu conexión a internet.';
+        } else if (error.code === 'TIMEOUT' || error.message?.includes('timeout')) {
+          errorMessage = 'La conexión tardó demasiado. Por favor intenta nuevamente.';
+        } else if (error.message) {
+          errorMessage = `Error: ${error.message}`;
+        }
+        
+        Alert.alert(
+          'Error de conexión',
+          errorMessage,
+          [{ text: 'Reintentar', style: 'default' }]
+        );
+      }
+      } catch (errorHandlingError) {
+        // Si incluso el manejo de errores falla, mostrar un mensaje genérico
+        console.error('❌ Error manejando el error:', errorHandlingError);
+        Alert.alert(
+          'Error',
+          'Ocurrió un problema inesperado. Por favor intenta nuevamente.',
+          [{ text: 'Entendido', style: 'default' }]
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -218,10 +310,11 @@ const RegisterScreen = () => {
 
         {/* Botón */}
         <ThemedButton
-          icon="arrow-forward-outline"
+          icon={isLoading ? undefined : "arrow-forward-outline"}
           onPress={onRegister}
+          disabled={isLoading}
         >
-          Crear cuenta
+          {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
         </ThemedButton>
 
         {/* Spacer */}

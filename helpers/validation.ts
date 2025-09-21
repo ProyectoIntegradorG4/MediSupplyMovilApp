@@ -68,15 +68,22 @@ export const validatePassword = (password: string): {
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]/.test(password);
 
     const criteriaMet = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length;
 
-    if (criteriaMet < 2) {
+    // El servicio requiere que se cumplan TODOS los criterios
+    if (criteriaMet < 4) {
+        const missing = [];
+        if (!hasUpperCase) missing.push('mayúsculas');
+        if (!hasLowerCase) missing.push('minúsculas');
+        if (!hasNumbers) missing.push('números');
+        if (!hasSpecialChar) missing.push('símbolos especiales');
+        
         return {
             isValid: false,
-            message: 'Incluye mayúsculas, minúsculas, números o símbolos',
-            strength: 'weak'
+            message: `Debe incluir: ${missing.join(', ')}`,
+            strength: criteriaMet < 2 ? 'weak' : 'medium'
         };
     }
 
@@ -123,6 +130,8 @@ export const validateFullName = (name: string): { isValid: boolean; message: str
 
 /**
  * Valida todo el formulario
+ * Mantiene compatibilidad con el campo 'username' para el frontend
+ * pero mapea internamente a 'nombre' para la API
  */
 export const validateForm = (form: {
     username: string;
@@ -142,5 +151,22 @@ export const validateForm = (form: {
     return {
         isValid: isFormValid,
         validations,
+    };
+};
+
+/**
+ * Convierte los datos del formulario al formato esperado por la API
+ */
+export const mapFormToApiData = (form: {
+    username: string;
+    email: string;
+    nit: string;
+    password: string;
+}) => {
+    return {
+        nombre: form.username, // Mapear username -> nombre
+        email: form.email,
+        nit: form.nit,
+        password: form.password,
     };
 };

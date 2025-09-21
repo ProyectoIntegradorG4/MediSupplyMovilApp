@@ -35,6 +35,16 @@ export const CONFIG = {
 };
 
 /**
+ * URLs de fallback para Android (diferentes configuraciones de red)
+ */
+const ANDROID_FALLBACK_URLS = [
+    'http://10.0.2.2:8001',      // Emulador Android estándar
+    'http://192.168.1.7:8001',    // IP real de la máquina
+    'http://localhost:8001',      // Localhost
+    'http://127.0.0.1:8001'       // IP loopback
+];
+
+/**
  * Obtiene la URL de la API según la plataforma y entorno
  */
 function getApiUrl(): string {
@@ -44,14 +54,19 @@ function getApiUrl(): string {
         return process.env.EXPO_PUBLIC_API_URL || 'https://api.medisupply.com';
     }
 
-    // Desarrollo: usar URL específica por plataforma
+    // Si hay URL específica en variables de entorno, usarla
+    if (process.env.EXPO_PUBLIC_API_URL) {
+        return process.env.EXPO_PUBLIC_API_URL;
+    }
+
+    // Desarrollo: usar URL específica por plataforma para el user-service
     switch (Platform.OS) {
         case 'ios':
-            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://localhost:3000/api';
+            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://localhost:8001';
         case 'android':
-            return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2:3000/api';
+            return process.env.EXPO_PUBLIC_API_URL_ANDROID || ANDROID_FALLBACK_URLS[0];
         default:
-            return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+            return 'http://localhost:8001';
     }
 }
 
@@ -84,4 +99,31 @@ export const validateEnvVars = () => {
     }
 
     return missing.length === 0;
+};
+
+/**
+ * Obtiene URLs alternativas para Android en caso de fallo de conexión
+ */
+export const getAndroidFallbackUrls = (): string[] => {
+    return ANDROID_FALLBACK_URLS;
+};
+
+/**
+ * Prueba la conectividad con una URL específica
+ */
+export const testApiConnection = async (url: string): Promise<boolean> => {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(`${url}/health`, {
+            method: 'GET',
+            signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
 };
