@@ -1,13 +1,13 @@
 # ================================================
-# Dockerfile para Producción - MediSupply Movil App
-# Optimizado para producción con build estático
+# Dockerfile para Desarrollo - MediSupply Movil App
+# Optimizado para desarrollo con hot reload y debugging
 # ================================================
 
-FROM node:20-alpine AS base
+FROM node:20-alpine
 
 # Etiquetas de información
 LABEL maintainer="MediSupply Team"
-LABEL description="MediSupply Movil App - Production Build"
+LABEL description="MediSupply Movil App - Development Environment"
 LABEL version="1.0.0"
 
 # Instalar dependencias del sistema necesarias para Expo y React Native
@@ -20,34 +20,26 @@ RUN apk add --no-cache \
     g++ \
     && rm -rf /var/cache/apk/*
 
-# Instalar Expo CLI globalmente
-RUN npm install -g @expo/cli@latest
-
 # Crear directorio de trabajo
 WORKDIR /app
+
+# Instalar Expo CLI globalmente
+RUN npm install -g @expo/cli@latest expo-doctor
 
 # Crear usuario no-root para seguridad
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S expo -u 1001 -G nodejs
 
-# ================================================
-# Stage 1: Dependencies
-# ================================================
-FROM base AS dependencies
-
 # Copiar archivos de configuración de paquetes
 COPY package.json yarn.lock ./
 
 # Instalar dependencias (como root para permisos)
-RUN yarn install --frozen-lockfile --production=false && yarn cache clean
+RUN yarn install --frozen-lockfile && yarn cache clean
 
-# ================================================
-# Stage 2: Build
-# ================================================
-FROM dependencies AS build
-
-# Cambiar propietario de la carpeta de la aplicación
-RUN chown -R expo:nodejs /app
+# Cambiar propietario de la carpeta de la aplicación y crear directorio home para expo
+RUN chown -R expo:nodejs /app && \
+    mkdir -p /home/expo/.expo && \
+    chown -R expo:nodejs /home/expo
 
 # Cambiar a usuario no-root
 USER expo
@@ -55,47 +47,28 @@ USER expo
 # Copiar el código de la aplicación
 COPY --chown=expo:nodejs . .
 
-# Build para web (producción)
-RUN yarn expo export --platform web
+# Exponer puertos necesarios para desarrollo
+# 8081: Metro bundler
+# 19000: Expo DevTools  
+# 19001: iOS Simulator
+# 19002: Android Emulator
+# 19006: Web development server
+EXPOSE 8081
+EXPOSE 19000
+EXPOSE 19001
+EXPOSE 19002
+EXPOSE 19006
 
-# ================================================
-# Stage 3: Production
-# ================================================
-FROM nginx:alpine AS production
+# Variables de entorno para desarrollo
+ENV NODE_ENV=development
+ENV EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
+ENV EXPO_DEBUG=true
+ENV EXPO_NO_TELEMETRY=1
+ENV EXPO_NO_UPDATE_CHECK=1
 
-# Instalar Node.js para posibles scripts de runtime
-RUN apk add --no-cache nodejs
-
-# Copiar configuración de nginx
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/default.conf /etc/nginx/conf.d/default.conf
-
-# Copiar archivos buildados desde el stage anterior
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Crear usuario no-root
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 -G nginx
-
-# Cambiar propietario de los archivos
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d
-
-# Crear directorio para logs
-RUN touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid
-
-# Cambiar a usuario no-root
-USER nginx
-
-# Exponer puerto 80
-EXPOSE 80
-
-# Health check
+# Health check para verificar que el servicio está funcionando
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD curl -f http://localhost:80 || exit 1
+    CMD curl -f http://localhost:19006 || exit 1
 
-# Comando por defecto
-CMD ["nginx", "-g", "daemon off;"]
+# Comando por defecto para desarrollo web (más estable en Docker)
+CMD ["yarn", "expo", "start", "--web", "--host", "lan"]
