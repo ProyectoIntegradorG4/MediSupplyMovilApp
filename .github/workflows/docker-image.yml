@@ -1,0 +1,58 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Git Semantic Version
+      uses: PaulHatch/semantic-version@v5.4.0
+      with:
+        # major (breaking) change, supports regular expressions wrapped with '/'
+        major_pattern: "major:"
+        # Same as above except indicating a minor change, supports regular expressions wrapped with '/'
+        minor_pattern: "feat:"
+        # A string to determine the format of the version output
+        version_format: "${major}.${minor}.${patch}-prerelease${increment}"
+      id: version
+
+    - name: Docker login
+      env:
+        DOCKER_USER: ${{ secrets.DOCKER_USER }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      run: |
+        echo "Iniciando Login"
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+        echo "Fin del Login"
+        echo "New version: $NEW_VERSION !!!!!!!!"
+
+    - name: Build Docker Image
+      env:
+        NEW_VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        docker build -t juliocesarforero/docker-medisupply:$NEW_VERSION .
+        docker build -t juliocesarforero/docker-medisupply:latest .
+
+    - name: Push Docker Image
+      env:
+        NEW_VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        docker push juliocesarforero/docker-medisupply:$NEW_VERSION
+        docker push juliocesarforero/docker-medisupply:latest
+        
+    # - name: Build the Docker image
+    #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
