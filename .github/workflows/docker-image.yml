@@ -46,10 +46,18 @@ jobs:
     - name: Build and Test Docker Image
       env:
         NEW_VERSION: ${{ steps.version.outputs.version }}
+        EXPO_PUBLIC_STAGE: prod
+        EXPO_PUBLIC_API_URL: ${{ secrets.EXPO_PUBLIC_API_URL }}
+        EXPO_PUBLIC_API_URL_ANDROID: ${{ secrets.EXPO_PUBLIC_API_URL_ANDROID }}
+        EXPO_PUBLIC_API_URL_IOS: ${{ secrets.EXPO_PUBLIC_API_URL_IOS }}
       run: |
         # Build without push first to test
         docker buildx build \
           --platform linux/amd64 \
+          --build-arg EXPO_PUBLIC_STAGE=$EXPO_PUBLIC_STAGE \
+          --build-arg EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL \
+          --build-arg EXPO_PUBLIC_API_URL_ANDROID=$EXPO_PUBLIC_API_URL_ANDROID \
+          --build-arg EXPO_PUBLIC_API_URL_IOS=$EXPO_PUBLIC_API_URL_IOS \
           --tag juliocesarforero/docker-medisupply:$NEW_VERSION \
           --tag juliocesarforero/docker-medisupply:latest \
           --cache-from type=gha \
@@ -66,6 +74,10 @@ jobs:
         # Now push the image
         docker buildx build \
           --platform linux/amd64 \
+          --build-arg EXPO_PUBLIC_STAGE=$EXPO_PUBLIC_STAGE \
+          --build-arg EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL \
+          --build-arg EXPO_PUBLIC_API_URL_ANDROID=$EXPO_PUBLIC_API_URL_ANDROID \
+          --build-arg EXPO_PUBLIC_API_URL_IOS=$EXPO_PUBLIC_API_URL_IOS \
           --tag juliocesarforero/docker-medisupply:$NEW_VERSION \
           --tag juliocesarforero/docker-medisupply:latest \
           --cache-from type=gha \

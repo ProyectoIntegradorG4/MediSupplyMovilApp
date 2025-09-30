@@ -36,6 +36,32 @@ EXPO_PUBLIC_STAGE=prod
 EXPO_PUBLIC_API_URL=https://api.medisupply.com
 ```
 
+### Construcción de imagen Docker (Producción)
+
+La imagen de producción genera la web estática con Expo y la sirve con Nginx. Puedes inyectar variables públicas en build-time usando build args:
+
+```bash
+docker build \
+  --build-arg EXPO_PUBLIC_STAGE=prod \
+  --build-arg EXPO_PUBLIC_API_URL=https://api.medisupply.com \
+  --build-arg EXPO_PUBLIC_API_URL_ANDROID=https://api.medisupply.com \
+  --build-arg EXPO_PUBLIC_API_URL_IOS=https://api.medisupply.com \
+  -t <tu-usuario>/docker-medisupply:latest .
+```
+
+En GitHub Actions, define `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_API_URL_ANDROID`, `EXPO_PUBLIC_API_URL_IOS` como Secrets y el workflow los pasará a `docker build` automáticamente.
+
+### Despliegue y Healthcheck
+
+- El contenedor expone el puerto 80 (Nginx)
+- Endpoint de salud: `/health`
+- Prueba local post-build:
+
+```bash
+docker run --rm -d -p 8080:80 --name medisupply <tu-usuario>/docker-medisupply:latest
+curl -f http://localhost:8080/health
+```
+
 ## Servicios Integrados
 
 ### User Service (Puerto 8001)

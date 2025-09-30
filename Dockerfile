@@ -1,74 +1,60 @@
-# ================================================
-# Dockerfile para Desarrollo - MediSupply Movil App
-# Optimizado para desarrollo con hot reload y debugging
-# ================================================
+############################################################
+# Dockerfile de Producción - MediSupply Web (Expo + Nginx) #
+############################################################
 
-FROM node:20-alpine
+# ===== Etapa 1: Build de la app web =====
+FROM node:20-alpine AS builder
 
-# Etiquetas de información
-LABEL maintainer="MediSupply Team"
-LABEL description="MediSupply Movil App - Development Environment"
-LABEL version="1.0.0"
-
-# Instalar dependencias del sistema necesarias para Expo y React Native
-RUN apk add --no-cache \
-    git \
-    bash \
-    curl \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/cache/apk/*
-
-# Crear directorio de trabajo
 WORKDIR /app
+ENV CI=1
 
-# Instalar Expo CLI globalmente
-RUN npm install -g @expo/cli@latest expo-doctor
+# Dependencias nativas usadas por algunas libs (sharp, etc.)
+RUN apk add --no-cache bash git curl python3 make g++ libc6-compat
 
-# Crear usuario no-root para seguridad
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S expo -u 1001 -G nodejs
-
-# Copiar archivos de configuración de paquetes
+# Copiar e instalar dependencias
 COPY package.json yarn.lock ./
-
-# Instalar dependencias (como root para permisos)
 RUN yarn install --frozen-lockfile && yarn cache clean
 
-# Cambiar propietario de la carpeta de la aplicación y crear directorio home para expo
-RUN chown -R expo:nodejs /app && \
-    mkdir -p /home/expo/.expo && \
-    chown -R expo:nodejs /home/expo
+# Copiar el resto del código
+COPY . .
 
-# Cambiar a usuario no-root
-USER expo
+# Variables públicas de build (se pueden sobreescribir con --build-arg)
+ARG EXPO_PUBLIC_STAGE=prod
+ARG EXPO_PUBLIC_API_URL
+ARG EXPO_PUBLIC_API_URL_ANDROID
+ARG EXPO_PUBLIC_API_URL_IOS
 
-# Copiar el código de la aplicación
-COPY --chown=expo:nodejs . .
+# Exportar como variables de entorno para que Expo las lea en build
+ENV EXPO_PUBLIC_STAGE=$EXPO_PUBLIC_STAGE \
+    EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL \
+    EXPO_PUBLIC_API_URL_ANDROID=$EXPO_PUBLIC_API_URL_ANDROID \
+    EXPO_PUBLIC_API_URL_IOS=$EXPO_PUBLIC_API_URL_IOS \
+    NODE_ENV=production
 
-# Exponer puertos necesarios para desarrollo
-# 8081: Metro bundler
-# 19000: Expo DevTools  
-# 19001: iOS Simulator
-# 19002: Android Emulator
-# 19006: Web development server
-EXPOSE 8081
-EXPOSE 19000
-EXPOSE 19001
-EXPOSE 19002
-EXPOSE 19006
+# Construir salida web estática en /app/dist
+RUN yarn web:build
 
-# Variables de entorno para desarrollo
-ENV NODE_ENV=development
-ENV EXPO_DEVTOOLS_LISTEN_ADDRESS=0.0.0.0
-ENV EXPO_DEBUG=true
-ENV EXPO_NO_TELEMETRY=1
-ENV EXPO_NO_UPDATE_CHECK=1
 
-# Health check para verificar que el servicio está funcionando
-HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
-    CMD curl -f http://localhost:19006 || exit 1
+# ===== Etapa 2: Runtime con Nginx =====
+FROM nginx:alpine AS runtime
 
-# Comando por defecto para desarrollo web (más estable en Docker)
-CMD ["yarn", "expo", "start", "--web", "--host", "lan"]
+LABEL org.opencontainers.image.title="MediSupply Web" \
+      org.opencontainers.image.description="Imagen de producción para la app web de MediSupply (Expo export + Nginx)" \
+      org.opencontainers.image.vendor="MediSupply" \
+      org.opencontainers.image.source="https://github.com/<org>/<repo>"
+
+# Copiar configuración de nginx
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/default.conf /etc/nginx/conf.d/default.conf
+
+# Copiar artefactos construidos
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Healthcheck
+COPY docker/health-check.sh /usr/local/bin/health-check.sh
+RUN chmod +x /usr/local/bin/health-check.sh
+
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD /usr/local/bin/health-check.sh
+
+CMD ["nginx", "-g", "daemon off;"]
