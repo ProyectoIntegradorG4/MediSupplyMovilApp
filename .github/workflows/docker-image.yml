@@ -18,6 +18,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Git Semantic Version
       uses: PaulHatch/semantic-version@v5.4.0
       with:
@@ -38,21 +41,36 @@ jobs:
         echo "Iniciando Login"
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
         echo "Fin del Login"
-        echo "New version: $NEW_VERSION !!!!!!!!"
+        echo "New version: ${{ steps.version.outputs.version }} !!!!!!!!"
 
-    - name: Build Docker Image
+    - name: Build and Test Docker Image
       env:
         NEW_VERSION: ${{ steps.version.outputs.version }}
       run: |
-        docker build -t juliocesarforero/docker-medisupply:$NEW_VERSION .
-        docker build -t juliocesarforero/docker-medisupply:latest .
-
-    - name: Push Docker Image
-      env:
-        NEW_VERSION: ${{ steps.version.outputs.version }}
-      run: |
-        docker push juliocesarforero/docker-medisupply:$NEW_VERSION
-        docker push juliocesarforero/docker-medisupply:latest
+        # Build without push first to test
+        docker buildx build \
+          --platform linux/amd64 \
+          --tag juliocesarforero/docker-medisupply:$NEW_VERSION \
+          --tag juliocesarforero/docker-medisupply:latest \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
+          --load .
         
+        # Test the image locally
+        echo "Testing image locally..."
+        docker run --rm -d --name test-container -p 8080:80 juliocesarforero/docker-medisupply:$NEW_VERSION
+        sleep 10
+        curl -f http://localhost:8080/health || exit 1
+        docker stop test-container
+        
+        # Now push the image
+        docker buildx build \
+          --platform linux/amd64 \
+          --tag juliocesarforero/docker-medisupply:$NEW_VERSION \
+          --tag juliocesarforero/docker-medisupply:latest \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
+          --push .
+
     # - name: Build the Docker image
     #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
