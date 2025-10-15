@@ -1,8 +1,4 @@
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,11 +6,15 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/presentation/theme/hooks/useColorScheme';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { QueryClient } from '@tanstack/react-query';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

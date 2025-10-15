@@ -1,7 +1,7 @@
 import { CONFIG, getAndroidFallbackUrls, testApiConnection } from '@/constants/config';
 import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
-import { Platform } from 'react-native';
 import axios from 'axios';
+import { Platform } from 'react-native';
 
 /**
  * Instancia de Axios configurada para autenticación
@@ -200,12 +200,16 @@ export const findWorkingApiUrl = async (): Promise<string> => {
   
   for (const url of urlsToTest) {
     console.log(`🌐 Probando: ${url}`);
-    const isWorking = await testApiConnection(url);
-    if (isWorking) {
-      console.log(`✅ URL funcionando: ${url}`);
-      return url;
+    try {
+      const isWorking = await testApiConnection(url);
+      if (isWorking) {
+        console.log(`✅ URL funcionando: ${url}`);
+        return url;
+      }
+      console.log(`❌ URL no disponible: ${url}`);
+    } catch (error) {
+      console.log(`❌ Error probando ${url}:`, error);
     }
-    console.log(`❌ URL no disponible: ${url}`);
   }
   
   console.warn('⚠️ No se encontró ninguna URL funcionando, usando la por defecto');

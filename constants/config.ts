@@ -40,8 +40,9 @@ export const CONFIG = {
 const ANDROID_FALLBACK_URLS = [
     'http://10.0.2.2:8001',      // Emulador Android estándar
     'http://192.168.1.7:8001',    // IP real de la máquina
-    'http://localhost:8001',      // Localhost
-    'http://127.0.0.1:8001'       // IP loopback
+    'http://192.168.5.107:8001',  // IP específica del docker-compose
+    'http://localhost:8001',      // Localhost (solo para web)
+    'http://127.0.0.1:8001'       // IP loopback (solo para web)
 ];
 
 /**
@@ -62,9 +63,9 @@ function getApiUrl(): string {
     // Desarrollo: usar URL específica por plataforma para el user-service
     switch (Platform.OS) {
         case 'ios':
-            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://localhost:8001';
+            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://192.168.5.107:8001';
         case 'android':
-            return process.env.EXPO_PUBLIC_API_URL_ANDROID || ANDROID_FALLBACK_URLS[0];
+            return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2:8001';
         default:
             return 'http://localhost:8001';
     }
@@ -114,15 +115,33 @@ export const getAndroidFallbackUrls = (): string[] => {
 export const testApiConnection = async (url: string): Promise<boolean> => {
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
         
-        const response = await fetch(`${url}/health`, {
-            method: 'GET',
-            signal: controller.signal,
-        });
+        // Intentar con diferentes endpoints
+        const endpoints = ['/health', '/', '/register'];
+        
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(`${url}${endpoint}`, {
+                    method: 'GET',
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                });
+                
+                clearTimeout(timeoutId);
+                if (response.ok || response.status === 405) { // 405 = Method Not Allowed es OK para algunos endpoints
+                    return true;
+                }
+            } catch (endpointError) {
+                // Continuar con el siguiente endpoint
+                continue;
+            }
+        }
         
         clearTimeout(timeoutId);
-        return response.ok;
+        return false;
     } catch (error) {
         return false;
     }
