@@ -39,8 +39,8 @@ export const CONFIG = {
  */
 const ANDROID_FALLBACK_URLS = [
     'http://10.0.2.2:8001',      // Emulador Android estándar
-    'http://192.168.1.7:8001',    // IP real de la máquina
-    'http://192.168.5.107:8001',  // IP específica del docker-compose
+    'http://192.168.101.90:8001',    // IP real de la máquina
+    'http://192.168.101.90:8001',  // IP específica del docker-compose
     'http://localhost:8001',      // Localhost (solo para web)
     'http://127.0.0.1:8001'       // IP loopback (solo para web)
 ];
@@ -116,10 +116,10 @@ export const testApiConnection = async (url: string): Promise<boolean> => {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
+
         // Intentar con diferentes endpoints
         const endpoints = ['/health', '/', '/register'];
-        
+
         for (const endpoint of endpoints) {
             try {
                 const response = await fetch(`${url}${endpoint}`, {
@@ -129,7 +129,7 @@ export const testApiConnection = async (url: string): Promise<boolean> => {
                         'Accept': 'application/json',
                     },
                 });
-                
+
                 clearTimeout(timeoutId);
                 if (response.ok || response.status === 405) { // 405 = Method Not Allowed es OK para algunos endpoints
                     return true;
@@ -139,7 +139,7 @@ export const testApiConnection = async (url: string): Promise<boolean> => {
                 continue;
             }
         }
-        
+
         clearTimeout(timeoutId);
         return false;
     } catch (error) {
