@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Pressable, PressableProps, StyleSheet } from 'react-native';
+import React from 'react';
+import { Pressable, PressableProps, StyleSheet, Text } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 
 interface Props extends PressableProps {
@@ -24,6 +25,7 @@ const ThemedButton = ({ children, icon, ...rest }: Props) => {
 
       {icon && (
         <Ionicons
+          testID="button-icon"
           name={icon}
           size={24}
           color="white"
