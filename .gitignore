@@ -42,3 +42,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# documentación personal (no subir al repo)
+MI_DOCUMENTACION/

@@ -18,7 +18,7 @@ import ThemedTextInput from '@/presentation/theme/components/ThemedTextInput';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
 
 const LoginScreen = () => {
-  const { login } = useAuthStore();
+  const { login, getRoleBasedRoute } = useAuthStore();
 
   const { height } = useWindowDimensions();
   const backgroundColor = useThemeColor({}, 'background');
@@ -32,19 +32,26 @@ const LoginScreen = () => {
   const onLogin = async () => {
     const { email, password } = form;
 
-    console.log({ email, password });
+    console.log('🔐 Iniciando login con:', { email, password });
 
     if (email.length === 0 || password.length === 0) {
+      console.log('⚠️ Email o password vacío');
       return;
     }
 
     setIsPosting(true);
+    console.log('📡 Llamando a login...');
     const wasSuccessful = await login(email, password);
+    console.log('✅ Login resultado:', wasSuccessful);
     setIsPosting(false);
 
     if (wasSuccessful) {
-      router.replace('/');
+      const roleBasedRoute = getRoleBasedRoute() as any;
+      console.log('🚀 Redirigiendo a:', roleBasedRoute);
+      router.replace(roleBasedRoute);
       return;
+    } else {
+      console.log('❌ Login falló');
     }
 
     Alert.alert('Error', 'Usuario o contraseña no son correctos');
