@@ -1,0 +1,217 @@
+/**
+ * Configuración centralizada de la aplicación
+ * Usa variables de entorno para mayor flexibilidad
+ * 
+ * IMPORTANTE: Migración al API Gateway
+ * - Todas las peticiones ahora pasan por el API Gateway (puerto 80)
+ * - Se eliminaron las URLs separadas por servicio (BASE_URL, AUTH_URL)
+ * - Ahora existe una sola URL: GATEWAY_URL
+ */
+
+import { Platform } from 'react-native';
+
+// === CONFIGURACIÓN DE ENTORNO ===
+export const CONFIG = {
+    // Entorno actual
+    STAGE: process.env.EXPO_PUBLIC_STAGE || 'dev',
+    IS_DEV: process.env.EXPO_PUBLIC_STAGE === 'dev',
+    IS_PROD: process.env.EXPO_PUBLIC_STAGE === 'prod',
+
+    // Debug
+    DEBUG: process.env.EXPO_DEBUG === 'true',
+
+    // API Gateway - Single point of entry
+    API: {
+        GATEWAY_URL: getApiGatewayUrl(),
+        TIMEOUT: 10000, // 10 segundos
+    },
+
+    // Configuración de autenticación
+    AUTH: {
+        TOKEN_KEY: 'auth_token',
+        REFRESH_TOKEN_KEY: 'refresh_token',
+    },
+
+    // Configuración de la app
+    APP: {
+        NAME: 'MediSupply',
+        VERSION: '1.0.0',
+    }
+};
+
+/**
+ * Obtiene la URL del API Gateway según la plataforma y entorno
+ * 
+ * FLUJO:
+ * 1. En producción → dominio público (https://api.medisupply.com)
+ * 2. En desarrollo → IP local con puerto 80 (API Gateway Nginx)
+ * 
+ * El API Gateway enruta internamente según el path:
+ *   - /api/v1/auth/*       → auth-service:8004
+ *   - /api/v1/users/*      → user-service:8001
+ *   - /api/v1/validate/*   → nit-validation-service:8002
+ *   - /api/v1/audits/*     → audit-service:8003
+ */
+function getApiGatewayUrl(): string {
+    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
+
+    // Producción - AWS con dominio público
+    if (stage === 'prod') {
+        return process.env.EXPO_PUBLIC_API_GATEWAY_URL || 'https://api.medisupply.com';
+    }
+
+    // Desarrollo - Usar URL del API Gateway (puerto 80)
+    // La URL varía según la plataforma debido a limitaciones de red de emuladores
+    switch (Platform.OS) {
+        case 'ios':
+            // iOS Simulator puede acceder directamente a la IP del host
+            return process.env.EXPO_PUBLIC_API_GATEWAY_URL_IOS || 
+                   process.env.EXPO_PUBLIC_API_GATEWAY_URL || 
+                   'http://192.168.5.107:80';
+        
+        case 'android':
+            // Android Emulator usa IP especial 10.0.2.2 para el localhost del host
+            return process.env.EXPO_PUBLIC_API_GATEWAY_URL_ANDROID || 
+                   'http://10.0.2.2:80';
+        
+        case 'web':
+            // Web puede usar localhost
+            return process.env.EXPO_PUBLIC_API_GATEWAY_URL || 
+                   'http://localhost:80';
+        
+        default:
+            return process.env.EXPO_PUBLIC_API_GATEWAY_URL || 
+                   'http://localhost:80';
+    }
+}
+
+/**
+ * Utilidad para logging de configuración (solo en desarrollo)
+ */
+export const logConfig = () => {
+    if (!CONFIG.IS_DEV && !CONFIG.DEBUG) return;
+
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║   CONFIGURACIÓN DE LA APP              ║');
+    console.log('╠════════════════════════════════════════╣');
+    console.log('║ 🚀 Entorno:', CONFIG.STAGE.padEnd(26), '║');
+    console.log('║ 📱 Plataforma:', Platform.OS.padEnd(23), '║');
+    console.log('║ 🌐 API Gateway:'.padEnd(39), '║');
+    console.log('║   ', CONFIG.API.GATEWAY_URL.padEnd(35), '║');
+    console.log('║ 🐛 Debug:', (CONFIG.DEBUG ? 'ON' : 'OFF').padEnd(26), '║');
+    console.log('╚════════════════════════════════════════╝');
+};
+
+/**
+ * Valida que las variables de entorno requeridas estén configuradas
+ */
+export const validateEnvVars = () => {
+    const required = [
+        'EXPO_PUBLIC_STAGE'
+    ];
+
+    const recommended = [
+        'EXPO_PUBLIC_API_GATEWAY_URL'
+    ];
+
+    const missing = required.filter(key => !process.env[key]);
+    const missingRecommended = recommended.filter(key => !process.env[key]);
+
+    if (missing.length > 0) {
+        console.error('❌ Variables de entorno REQUERIDAS faltantes:', missing);
+    }
+
+    if (missingRecommended.length > 0) {
+        console.warn('⚠️  Variables de entorno RECOMENDADAS faltantes:', missingRecommended);
+        console.warn('    Se usarán valores por defecto, pero es mejor configurarlas.');
+    }
+
+    return {
+        isValid: missing.length === 0,
+        missing,
+        missingRecommended
+    };
+};
+
+/**
+ * Prueba la conectividad con el API Gateway
+ * 
+ * @param url URL a probar (por defecto usa CONFIG.API.GATEWAY_URL)
+ * @returns Promise<boolean> true si la conexión es exitosa
+ */
+export const testApiGatewayConnection = async (url?: string): Promise<boolean> => {
+    const testUrl = url || CONFIG.API.GATEWAY_URL;
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        console.log(`🔍 Probando conexión a API Gateway: ${testUrl}`);
+
+        const response = await fetch(`${testUrl}/health`, {
+            method: 'GET',
+            signal: controller.signal,
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            console.log('✅ Conexión al API Gateway exitosa');
+            return true;
+        } else {
+            console.warn(`⚠️  API Gateway respondió con status ${response.status}`);
+            return false;
+        }
+    } catch (error: any) {
+        console.error('❌ Error conectando al API Gateway:', error.message);
+        return false;
+    }
+};
+
+/**
+ * Obtiene información de diagnóstico de red
+ * Útil para debugging de problemas de conectividad
+ */
+export const getNetworkDiagnostics = () => {
+    return {
+        platform: Platform.OS,
+        gatewayUrl: CONFIG.API.GATEWAY_URL,
+        stage: CONFIG.STAGE,
+        timestamp: new Date().toISOString(),
+    };
+};
+
+/**
+ * MIGRACION: Funciones deprecadas
+ * Las siguientes funciones ya NO se usan desde la migración al API Gateway
+ * Se mantienen comentadas para referencia histórica
+ */
+
+/*
+// ❌ DEPRECADO - Ya no se usa
+function getApiUrl(): string {
+    // Apuntaba directamente a user-service:8001
+    // Ahora todo pasa por getApiGatewayUrl() en puerto 80
+}
+
+// ❌ DEPRECADO - Ya no se usa
+function getAuthApiUrl(): string {
+    // Apuntaba directamente a auth-service:8004
+    // Ahora todo pasa por getApiGatewayUrl() en puerto 80
+}
+
+// ❌ DEPRECADO - Ya no se usa
+export const getAndroidFallbackUrls = (): string[] => {
+    // Ya no se necesitan URLs de fallback
+    // Solo se usa el API Gateway
+}
+
+// ❌ DEPRECADO - Ya no se usa
+export const testApiConnection = async (url: string): Promise<boolean> => {
+    // Reemplazado por testApiGatewayConnection()
+}
+*/
+

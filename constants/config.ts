@@ -40,10 +40,10 @@ export const CONFIG = {
  * URLs de fallback para Android (diferentes configuraciones de red)
  */
 const ANDROID_FALLBACK_URLS = [
-    'http://10.0.2.2:8001',      // Emulador Android estándar
-    'http://192.168.1.110:8001',    // IP real de la máquina
-    'http://localhost:8001',      // Localhost (solo para web)
-    'http://127.0.0.1:8001'       // IP loopback (solo para web)
+    'http://10.0.2.2',      // Emulador Android estándar
+    'http://192.168.101.78',    // IP real de la máquina
+    'http://localhost',      // Localhost (solo para web)
+    'http://127.0.0.1'       // IP loopback (solo para web)
 ];
 
 /**
@@ -91,11 +91,11 @@ function getApiUrl(): string {
     // Desarrollo: usar URL específica por plataforma para el user-service
     switch (Platform.OS) {
         case 'ios':
-            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://192.168.5.107:8001';
+            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://192.168.101.78';
         case 'android':
-            return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2:8001';
+            return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2';
         default:
-            return 'http://localhost:8001';
+            return 'http://localhost';
     }
 }
 
