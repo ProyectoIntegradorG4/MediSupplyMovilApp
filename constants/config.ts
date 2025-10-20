@@ -17,7 +17,9 @@ export const CONFIG = {
 
     // URLs de API según plataforma
     API: {
-        BASE_URL: getApiUrl(),
+        GATEWAY_URL: getGatewayUrl(), // API Gateway (NGINX en puerto 80)
+        BASE_URL: getApiUrl(), // DEPRECATED: Mantener por compatibilidad
+        AUTH_URL: getAuthApiUrl(), // DEPRECATED: Mantener por compatibilidad
         TIMEOUT: 10000, // 10 segundos
     },
 
@@ -39,11 +41,37 @@ export const CONFIG = {
  */
 const ANDROID_FALLBACK_URLS = [
     'http://10.0.2.2:8001',      // Emulador Android estándar
-    'http://192.168.101.90:8001',    // IP real de la máquina
-    'http://192.168.101.90:8001',  // IP específica del docker-compose
+    'http://192.168.1.110:8001',    // IP real de la máquina
     'http://localhost:8001',      // Localhost (solo para web)
     'http://127.0.0.1:8001'       // IP loopback (solo para web)
 ];
+
+/**
+ * Obtiene la URL del API Gateway (NGINX) según la plataforma y entorno
+ * El API Gateway enruta a todos los servicios desde un único punto de entrada (puerto 80)
+ */
+function getGatewayUrl(): string {
+    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
+
+    if (stage === 'prod') {
+        return process.env.EXPO_PUBLIC_GATEWAY_URL || 'https://api.medisupply.com';
+    }
+
+    // Si hay URL específica en variables de entorno, usarla
+    if (process.env.EXPO_PUBLIC_GATEWAY_URL) {
+        return process.env.EXPO_PUBLIC_GATEWAY_URL;
+    }
+
+    // Desarrollo: usar URL específica por plataforma para el API Gateway
+    switch (Platform.OS) {
+        case 'ios':
+            return process.env.EXPO_PUBLIC_GATEWAY_URL_IOS || 'http://192.168.5.107';
+        case 'android':
+            return process.env.EXPO_PUBLIC_GATEWAY_URL_ANDROID || 'http://10.0.2.2';
+        default:
+            return 'http://localhost';
+    }
+}
 
 /**
  * Obtiene la URL de la API según la plataforma y entorno
@@ -68,6 +96,32 @@ function getApiUrl(): string {
             return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2:8001';
         default:
             return 'http://localhost:8001';
+    }
+}
+
+/**
+ * Obtiene la URL del Auth Service según la plataforma y entorno
+ */
+function getAuthApiUrl(): string {
+    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
+
+    if (stage === 'prod') {
+        return process.env.EXPO_PUBLIC_AUTH_URL || 'https://auth.medisupply.com';
+    }
+
+    // Si hay URL específica en variables de entorno, usarla
+    if (process.env.EXPO_PUBLIC_AUTH_URL) {
+        return process.env.EXPO_PUBLIC_AUTH_URL;
+    }
+
+    // Desarrollo: usar URL específica por plataforma para el auth-service
+    switch (Platform.OS) {
+        case 'ios':
+            return process.env.EXPO_PUBLIC_AUTH_URL_IOS || 'http://192.168.5.107:8004';
+        case 'android':
+            return process.env.EXPO_PUBLIC_AUTH_URL_ANDROID || 'http://10.0.2.2:8004';
+        default:
+            return 'http://localhost:8004';
     }
 }
 
