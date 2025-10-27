@@ -28,9 +28,10 @@ function NavItem({ icon, label, active = false, onPress }: NavItemProps) {
       style={({ pressed }) => [
         styles.navItem,
         {
-          backgroundColor: active ? primaryColor + '20' : 'transparent',
+          backgroundColor: active ? primaryColor : 'transparent',
           opacity: pressed ? 0.7 : 1,
-          borderColor: primaryColor + '30',
+          borderColor: active ? primaryColor : primaryColor + '30',
+          borderWidth: active ? 0 : 1.5,
         },
       ]}
     >
@@ -38,14 +39,14 @@ function NavItem({ icon, label, active = false, onPress }: NavItemProps) {
         <Ionicons
           name={icon}
           size={28}
-          color={active ? primaryColor : textColor}
+          color={active ? '#FFFFFF' : textColor}
         />
       </View>
       <Text
         style={[
           styles.label,
           {
-            color: active ? primaryColor : textColor,
+            color: active ? '#FFFFFF' : textColor,
             fontWeight: active ? 'bold' : 'normal',
           },
         ]}
@@ -75,8 +76,8 @@ export default function BottomNav({ style, lightColor, darkColor, ...otherProps 
     <View
       style={[
         styles.container,
-        { 
-          backgroundColor, 
+        {
+          backgroundColor,
           borderTopColor: borderColor + '20',
           paddingBottom: Math.max(insets.bottom, 8), // Respeta el área segura inferior
         },
@@ -191,7 +192,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    borderWidth: 1.5,
     minWidth: 64,
   },
   iconContainer: {

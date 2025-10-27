@@ -1,14 +1,76 @@
-import { Search } from "lucide-react";
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import {
+  StyleSheet,
+  TextInput,
+  TextInputProps,
+  View,
+} from 'react-native';
+import { useThemeColor } from '../hooks/useThemeColor';
 
-export default function SearchBar() {
+interface SearchBarProps extends TextInputProps {
+  onSearch?: (text: string) => void;
+}
+
+export default function SearchBar({ onSearch, ...rest }: SearchBarProps) {
+  const primaryColor = useThemeColor({}, 'primary');
+  const textColor = useThemeColor({}, 'text');
+  const backgroundColor = useThemeColor({}, 'background');
+
+  const [isActive, setIsActive] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  const handleChangeText = (text: string) => {
+    setSearchText(text);
+    onSearch?.(text);
+  };
+
+  const borderColor = isActive ? primaryColor : '#ccc';
+
   return (
-    <div className="relative w-full">
-      <input
-        type="text"
-        placeholder="Buscar"
-        className="w-full h-9 px-4 pr-12 rounded-lg border border-light-gray bg-white text-[15px] placeholder:text-light-gray focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent"
+    <View style={[styles.container, { borderColor }]}>
+      <Ionicons
+        name="search"
+        size={24}
+        color={textColor}
+        style={styles.icon}
       />
-      <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-[30px] h-[30px] text-black" />
-    </div>
+      <TextInput
+        value={searchText}
+        onChangeText={handleChangeText}
+        placeholder="Buscar"
+        placeholderTextColor="#5c5c5c"
+        onFocus={() => setIsActive(true)}
+        onBlur={() => setIsActive(false)}
+        style={[
+          styles.input,
+          {
+            color: textColor,
+            backgroundColor: backgroundColor,
+          },
+        ]}
+        {...rest}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 45,
+    width: '100%',
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    height: '100%',
+  },
+});
