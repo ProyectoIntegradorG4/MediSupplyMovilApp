@@ -1,18 +1,17 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { ThemedText } from '@/presentation/theme/components/ThemedText';
-import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
-import LogoutIconButton from '@/presentation/auth/components/LogoutIconButton';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import { ThemedText } from '@/presentation/theme/components/ThemedText';
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 const ClientesScreen = () => {
-  const backgroundColor = useThemeColor({}, 'background');
   const { user } = useAuthStore();
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor }]}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+    >
       <View style={styles.header}>
-        <ThemedText type="title">Gestión de Clientes</ThemedText>
         <ThemedText style={styles.subtitle}>
           Bienvenido, {user?.fullName || user?.email}
         </ThemedText>
@@ -60,8 +59,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 100, // Espacio para el BottomNav
+  },
   header: {
     padding: 20,
+    paddingTop: 16,
     alignItems: 'center',
   },
   subtitle: {

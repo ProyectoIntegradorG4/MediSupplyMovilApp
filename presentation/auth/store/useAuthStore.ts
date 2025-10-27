@@ -109,8 +109,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     }
 
     if (user.roles.includes('usuario_institucional')) {
-      console.log('🧭 [Store] Rol: usuario_institucional → pedidos');
-      return '/(products-app)/(pedidos)';
+      console.log('🧭 [Store] Rol: usuario_institucional → entregas');
+      return '/(products-app)/(entregas)';
     }
 
     // Rol por defecto si no coincide con ninguno

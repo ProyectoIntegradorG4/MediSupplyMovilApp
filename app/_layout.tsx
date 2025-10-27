@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/presentation/theme/hooks/useColorScheme';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { QueryClient } from '@tanstack/react-query';
 
@@ -38,19 +39,21 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView
-      style={{ backgroundColor: backgroundColor, flex: 1 }}
-    >
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" /> */}
-        </Stack>
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView
+        style={{ backgroundColor: backgroundColor, flex: 1 }}
+      >
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" /> */}
+          </Stack>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
