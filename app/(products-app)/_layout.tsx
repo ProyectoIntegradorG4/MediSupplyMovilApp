@@ -1,15 +1,36 @@
-import { Redirect, Stack, useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { Redirect, Stack, usePathname, useRouter } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import LogoutIconButton from '@/presentation/auth/components/LogoutIconButton';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import BottomNav from '@/presentation/theme/components/BottomNav';
+import TopBar from '@/presentation/theme/components/TopBar';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
+
+// Mapeo de rutas a títulos
+const ROUTE_TITLES: Record<string, string> = {
+  '/(products-app)/(home)': 'Productos',
+  '/(products-app)/(clientes)': 'Gestión de Clientes',
+  '/(products-app)/(pedidos)': 'Mis Pedidos',
+  '/(products-app)/(rutas)': 'Rutas de Entrega',
+  '/(products-app)/(entregas)': 'Mis Entregas',
+  '/(products-app)/(perfil)': 'Mi Perfil',
+};
 
 const CheckAuthenticationLayout = () => {
   const { status, checkStatus, user, getRoleBasedRoute } = useAuthStore();
   const backgroundColor = useThemeColor({}, 'background');
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Obtener el título basado en la ruta actual
+  const currentTitle = useMemo(() => {
+    const matchedRoute = Object.keys(ROUTE_TITLES).find((route) =>
+      pathname.includes(route.replace('/(products-app)', ''))
+    );
+    return matchedRoute ? ROUTE_TITLES[matchedRoute] : 'MediSupply';
+  }, [pathname]);
 
   useEffect(() => {
     console.log('📱 [Layout] Verificando estado de autenticación...');
@@ -47,39 +68,44 @@ const CheckAuthenticationLayout = () => {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShadowVisible: false,
-        headerStyle: {
-          backgroundColor: backgroundColor,
-        },
-        contentStyle: {
-          backgroundColor: backgroundColor,
-        },
-      }}
-    >
-      <Stack.Screen
-        name="(home)/index"
-        options={{
-          title: 'Productos',
-          headerLeft: () => <LogoutIconButton />,
-        }}
+    <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
+      {/* Configurar StatusBar */}
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={backgroundColor}
+        translucent={false}
       />
-      <Stack.Screen
-        name="(clientes)/index"
-        options={{
-          title: 'Clientes',
-          headerLeft: () => <LogoutIconButton />,
+
+      {/* TopBar compartido para todas las pantallas */}
+      <TopBar title={currentTitle} />
+
+      {/* Contenido de las pantallas */}
+      <Stack
+        screenOptions={{
+          headerShown: false, // Ocultamos el header nativo
+          contentStyle: {
+            backgroundColor: backgroundColor,
+          },
         }}
-      />
-      <Stack.Screen
-        name="(pedidos)/index"
-        options={{
-          title: 'Pedidos',
-          headerLeft: () => <LogoutIconButton />,
-        }}
-      />
-    </Stack>
+      >
+        <Stack.Screen name="(home)/index" />
+        <Stack.Screen name="(clientes)/index" />
+        <Stack.Screen name="(pedidos)/index" />
+        <Stack.Screen name="(rutas)/index" />
+        <Stack.Screen name="(entregas)/index" />
+        <Stack.Screen name="(perfil)/index" />
+      </Stack>
+
+      {/* BottomNav compartido para todas las pantallas */}
+      <BottomNav />
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
 export default CheckAuthenticationLayout;

@@ -10,6 +10,7 @@ import {
 
 import { router } from 'expo-router';
 
+import { validateEmail } from '@/helpers/validation';
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import ThemedButton from '@/presentation/theme/components/ThemedButton';
 import ThemedLink from '@/presentation/theme/components/ThemedLink';
@@ -28,16 +29,44 @@ const LoginScreen = () => {
     email: '',
     password: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const onLogin = async () => {
     const { email, password } = form;
 
-    console.log('🔐 Iniciando login con:', { email, password });
+    console.log('🔐 Iniciando login con:', { email, password: '***' });
 
-    if (email.length === 0 || password.length === 0) {
-      console.log('⚠️ Email o password vacío');
+    // === VALIDACIÓN DE CAMPOS ===
+    const errors: Record<string, string> = {};
+
+    // Validar email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.message;
+    }
+
+    // Validar contraseña
+    if (!password) {
+      errors.password = 'La contraseña es obligatoria';
+    } else if (password.length === 0) {
+      errors.password = 'La contraseña no puede estar vacía';
+    }
+
+    // Si hay errores, mostrarlos y detener
+    if (Object.keys(errors).length > 0) {
+      console.log('⚠️ Errores de validación:', errors);
+      setFieldErrors(errors);
+
+      Alert.alert(
+        'Formulario incompleto',
+        'Por favor corrige los errores marcados en el formulario',
+        [{ text: 'Entendido', style: 'default' }]
+      );
       return;
     }
+
+    // Limpiar errores previos
+    setFieldErrors({});
 
     setIsPosting(true);
     console.log('📡 Llamando a login...');
@@ -96,7 +125,14 @@ const LoginScreen = () => {
             autoCapitalize="none"
             icon="mail-outline"
             value={form.email}
-            onChangeText={(value) => setForm({ ...form, email: value })}
+            onChangeText={(value) => {
+              setForm({ ...form, email: value });
+              // Limpiar error cuando el usuario empiece a escribir
+              if (fieldErrors.email) {
+                setFieldErrors({ ...fieldErrors, email: '' });
+              }
+            }}
+            error={fieldErrors.email}
           />
 
           <ThemedTextInput
@@ -105,7 +141,14 @@ const LoginScreen = () => {
             autoCapitalize="none"
             icon="lock-closed-outline"
             value={form.password}
-            onChangeText={(value) => setForm({ ...form, password: value })}
+            onChangeText={(value) => {
+              setForm({ ...form, password: value });
+              // Limpiar error cuando el usuario empiece a escribir
+              if (fieldErrors.password) {
+                setFieldErrors({ ...fieldErrors, password: '' });
+              }
+            }}
+            error={fieldErrors.password}
           />
         </View>
 

@@ -3,7 +3,7 @@ import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-const PedidosScreen = () => {
+const EntregasScreen = () => {
   const { user } = useAuthStore();
 
   return (
@@ -21,40 +21,40 @@ const PedidosScreen = () => {
       </View>
 
       <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Funcionalidades de Usuario Institucional</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Seguimiento de Entregas</ThemedText>
         
         <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>🛒 Mis Pedidos</ThemedText>
+          <ThemedText style={styles.featureTitle}>🚚 Entregas Pendientes</ThemedText>
           <ThemedText style={styles.featureDescription}>
-            Visualiza y gestiona todos tus pedidos realizados
+            Visualiza todas las entregas pendientes de tus pedidos
           </ThemedText>
         </View>
 
         <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>➕ Nuevo Pedido</ThemedText>
+          <ThemedText style={styles.featureTitle}>📦 En Tránsito</ThemedText>
           <ThemedText style={styles.featureDescription}>
-            Crea un nuevo pedido de productos médicos
+            Rastrea tus pedidos que están en camino a tu ubicación
           </ThemedText>
         </View>
 
         <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📦 Estado de Pedidos</ThemedText>
+          <ThemedText style={styles.featureTitle}>✅ Entregas Completadas</ThemedText>
           <ThemedText style={styles.featureDescription}>
-            Consulta el estado actual de tus pedidos en tiempo real
+            Revisa el historial de entregas completadas exitosamente
           </ThemedText>
         </View>
 
         <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📋 Historial</ThemedText>
+          <ThemedText style={styles.featureTitle}>📍 Rastreo en Tiempo Real</ThemedText>
           <ThemedText style={styles.featureDescription}>
-            Revisa el historial completo de tus pedidos anteriores
+            Ubicación en vivo del vehículo de entrega
           </ThemedText>
         </View>
 
         <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>💳 Facturación</ThemedText>
+          <ThemedText style={styles.featureTitle}>🔔 Notificaciones</ThemedText>
           <ThemedText style={styles.featureDescription}>
-            Accede a tus facturas y documentos de pago
+            Recibe alertas sobre el estado de tus entregas
           </ThemedText>
         </View>
       </View>
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
     fontWeight: 'bold',
-    color: '#34C759',
+    color: '#5856D6',
   },
   content: {
     padding: 20,
@@ -94,12 +94,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   featureCard: {
-    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    backgroundColor: 'rgba(88, 86, 214, 0.1)',
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#34C759',
+    borderLeftColor: '#5856D6',
   },
   featureTitle: {
     fontSize: 16,
@@ -113,4 +113,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PedidosScreen;
+export default EntregasScreen;
+

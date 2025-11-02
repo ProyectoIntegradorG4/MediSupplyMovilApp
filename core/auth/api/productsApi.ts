@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
+import axios from 'axios';
 import { Platform } from 'react-native';
 
 // TODO: conectar mediante envs vars, Android e IOS
@@ -10,8 +10,8 @@ export const API_URL =
   STAGE === 'prod'
     ? process.env.EXPO_PUBLIC_API_URL
     : Platform.OS === 'ios'
-    ? process.env.EXPO_PUBLIC_API_URL_IOS
-    : process.env.EXPO_PUBLIC_API_URL_ANDROID;
+      ? process.env.EXPO_PUBLIC_API_URL_IOS
+      : process.env.EXPO_PUBLIC_API_URL_ANDROID;
 
 const productsApi = axios.create({
   baseURL: API_URL,
