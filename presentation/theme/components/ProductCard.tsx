@@ -21,6 +21,8 @@ interface ProductCardProps {
     initialQuantity?: number;
     imageUrl?: string;
     onAddToOrder?: (productSku: string, quantity: number) => void;
+    onAddToCart?: (productSku: string, quantity: number) => void; // Callback para carrito
+    onStockValidationError?: (message: string) => void; // Callback para errores de stock
 }
 
 export default function ProductCard({
@@ -34,6 +36,8 @@ export default function ProductCard({
     initialQuantity = 0,
     imageUrl,
     onAddToOrder,
+    onAddToCart,
+    onStockValidationError,
 }: ProductCardProps) {
     const [quantity, setQuantity] = useState(initialQuantity);
     const [isAdded, setIsAdded] = useState(initialQuantity > 0);
@@ -64,12 +68,40 @@ export default function ProductCard({
 
     const handleQuantityChange = (text: string) => {
         const value = parseInt(text) || 0;
-        setQuantity(Math.max(0, Math.min(stock, value)));
+        // Limitar a stock disponible
+        const limitedValue = Math.max(0, Math.min(stock, value));
+        setQuantity(limitedValue);
+        
+        // Mostrar alerta si intenta exceder stock
+        if (value > stock && onStockValidationError) {
+            onStockValidationError(`Stock insuficiente. Disponible: ${stock} unidades`);
+        }
     };
 
     const handleAddToOrder = () => {
-        if (quantity > 0) {
-            setIsAdded(true);
+        if (quantity === 0) return;
+        
+        // Validación de stock antes de agregar
+        if (quantity > stock) {
+            if (onStockValidationError) {
+                onStockValidationError(`Stock insuficiente. Disponible: ${stock} unidades`);
+            }
+            setQuantity(stock); // Ajustar a stock máximo
+            return;
+        }
+
+        if (stock === 0) {
+            if (onStockValidationError) {
+                onStockValidationError('Producto sin stock disponible');
+            }
+            return;
+        }
+
+        setIsAdded(true);
+        // Usar onAddToCart si está disponible, sino onAddToOrder (retrocompatibilidad)
+        if (onAddToCart) {
+            onAddToCart(sku, quantity);
+        } else {
             onAddToOrder?.(sku, quantity);
         }
     };
@@ -158,19 +190,21 @@ export default function ProductCard({
                     />
                     <Pressable
                         onPress={handleAddToOrder}
-                        disabled={quantity === 0}
+                        disabled={quantity === 0 || stock === 0}
                         style={({ pressed }) => [
                             styles.addButton,
                             {
                                 backgroundColor: isAdded
                                     ? '#28a745'
+                                    : stock === 0
+                                    ? '#6c757d'
                                     : buttonColors[stockStatus],
-                                opacity: pressed ? 0.7 : quantity === 0 ? 0.5 : 1,
+                                opacity: pressed ? 0.7 : quantity === 0 || stock === 0 ? 0.5 : 1,
                             },
                         ]}
                     >
                         <Text style={styles.buttonText}>
-                            {isAdded ? 'Agregado' : 'Agregar'}
+                            {stock === 0 ? 'Sin Stock' : isAdded ? 'Agregado' : 'Agregar'}
                         </Text>
                     </Pressable>
                 </View>

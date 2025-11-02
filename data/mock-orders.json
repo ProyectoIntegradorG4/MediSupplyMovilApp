@@ -1,0 +1,224 @@
+[
+  {
+    "id": "ped-001",
+    "cliente_id": 1,
+    "hospital": "Hospital Universitario San Ignacio",
+    "type": "Hospital",
+    "status": "pendiente",
+    "refNumber": "REF-2024-001",
+    "time": "10:30 AM",
+    "phone": "+57 300 123 4567",
+    "doctor": "Dr. Juan Pérez",
+    "amount": "$2,500,000",
+    "units": "45 unidades",
+    "creationDate": "02/11/2024",
+    "deliveryDate": "05/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-001",
+        "sku": "MSK-001",
+        "nombre": "Mascarillas Quirúrgicas Desechables",
+        "cantidad": 20,
+        "precio": 25000
+      },
+      {
+        "productoId": "prod-002",
+        "sku": "GNT-M-001",
+        "nombre": "Guantes de Nitrilo Talla M",
+        "cantidad": 25,
+        "precio": 18000
+      }
+    ]
+  },
+  {
+    "id": "ped-002",
+    "cliente_id": 1,
+    "hospital": "Hospital Universitario San Ignacio",
+    "type": "Hospital",
+    "status": "enviado",
+    "refNumber": "REF-2024-002",
+    "time": "09:15 AM",
+    "phone": "+57 300 123 4567",
+    "doctor": "Dr. Juan Pérez",
+    "amount": "$1,800,000",
+    "units": "30 unidades",
+    "creationDate": "01/11/2024",
+    "deliveryDate": "04/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-005",
+        "sku": "BAT-QRG",
+        "nombre": "Batas Quirúrgicas Desechables",
+        "cantidad": 30,
+        "precio": 35000
+      }
+    ]
+  },
+  {
+    "id": "ped-003",
+    "cliente_id": 2,
+    "hospital": "Clínica Shaio",
+    "type": "Clínica",
+    "status": "entregado",
+    "refNumber": "REF-2024-003",
+    "time": "02:45 PM",
+    "phone": "+57 310 987 6543",
+    "doctor": "Dra. María García",
+    "amount": "$3,200,000",
+    "units": "60 unidades",
+    "creationDate": "28/10/2024",
+    "deliveryDate": "02/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-008",
+        "sku": "GAS-10X10",
+        "nombre": "Gasas Estériles 10x10cm",
+        "cantidad": 40,
+        "precio": 2800
+      },
+      {
+        "productoId": "prod-015",
+        "sku": "SAL-09-500",
+        "nombre": "Solución Salina 0.9% 500ml",
+        "cantidad": 20,
+        "precio": 4500
+      }
+    ]
+  },
+  {
+    "id": "ped-004",
+    "cliente_id": 3,
+    "hospital": "Hospital El Country",
+    "type": "Hospital",
+    "status": "pendiente",
+    "refNumber": "REF-2024-004",
+    "time": "11:20 AM",
+    "phone": "+57 320 456 7890",
+    "doctor": "Dr. Carlos Rodríguez",
+    "amount": "$950,000",
+    "units": "15 unidades",
+    "creationDate": "03/11/2024",
+    "deliveryDate": "06/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-011",
+        "sku": "TERM-DIG-INF",
+        "nombre": "Termómetro Digital Infrarrojo",
+        "cantidad": 10,
+        "precio": 95000
+      }
+    ]
+  },
+  {
+    "id": "ped-005",
+    "cliente_id": 2,
+    "hospital": "Clínica Shaio",
+    "type": "Clínica",
+    "status": "cancelado",
+    "refNumber": "REF-2024-005",
+    "time": "03:30 PM",
+    "phone": "+57 310 987 6543",
+    "doctor": "Dra. María García",
+    "amount": "$425,000",
+    "units": "8 unidades",
+    "creationDate": "27/10/2024",
+    "deliveryDate": "30/10/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-012",
+        "sku": "OXI-PORT",
+        "nombre": "Oxímetro de Pulso Portátil",
+        "cantidad": 8,
+        "precio": 125000
+      }
+    ]
+  },
+  {
+    "id": "ped-006",
+    "cliente_id": 4,
+    "hospital": "Centro Médico Los Rosales",
+    "type": "Centro Médico",
+    "status": "pendiente",
+    "refNumber": "REF-2024-006",
+    "time": "08:45 AM",
+    "phone": "+57 315 234 5678",
+    "doctor": "Dr. Luis Martínez",
+    "amount": "$1,250,000",
+    "units": "35 unidades",
+    "creationDate": "03/11/2024",
+    "deliveryDate": "07/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-003",
+        "sku": "JNG-5ML",
+        "nombre": "Jeringas Desechables 5ml",
+        "cantidad": 35,
+        "precio": 1200
+      }
+    ]
+  },
+  {
+    "id": "ped-007",
+    "cliente_id": 5,
+    "hospital": "IPS Salud Total",
+    "type": "IPS",
+    "status": "enviado",
+    "refNumber": "REF-2024-007",
+    "time": "01:15 PM",
+    "phone": "+57 318 345 6789",
+    "doctor": "Dra. Ana López",
+    "amount": "$675,000",
+    "units": "25 unidades",
+    "creationDate": "02/11/2024",
+    "deliveryDate": "05/11/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-009",
+        "sku": "ALC-70-500",
+        "nombre": "Alcohol Isopropílico 70% 500ml",
+        "cantidad": 25,
+        "precio": 5500
+      }
+    ]
+  },
+  {
+    "id": "ped-008",
+    "cliente_id": 1,
+    "hospital": "Hospital Universitario San Ignacio",
+    "type": "Hospital",
+    "status": "entregado",
+    "refNumber": "REF-2024-008",
+    "time": "04:00 PM",
+    "phone": "+57 300 123 4567",
+    "doctor": "Dr. Juan Pérez",
+    "amount": "$2,100,000",
+    "units": "42 unidades",
+    "creationDate": "25/10/2024",
+    "deliveryDate": "29/10/2024",
+    "gerente_id": 1,
+    "items": [
+      {
+        "productoId": "prod-013",
+        "sku": "VEN-ELAS-10",
+        "nombre": "Vendas Elásticas 10cm x 5m",
+        "cantidad": 30,
+        "precio": 6500
+      },
+      {
+        "productoId": "prod-014",
+        "sku": "ESP-HIP-25",
+        "nombre": "Esparadrapo Hipoalergénico 2.5cm",
+        "cantidad": 12,
+        "precio": 3200
+      }
+    ]
+  }
+]
+

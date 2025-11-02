@@ -1,0 +1,223 @@
+[
+  {
+    "productoId": "prod-001",
+    "nombre": "Mascarillas Quirúrgicas Desechables",
+    "sku": "MSK-001",
+    "precio": 25000,
+    "stock": 5000,
+    "stockStatus": "available",
+    "fechaVencimiento": "2025-12-31",
+    "ubicacion": "Bodega Principal - Estantería A1",
+    "categoria": "Protección Personal"
+  },
+  {
+    "productoId": "prod-002",
+    "nombre": "Guantes de Nitrilo Talla M",
+    "sku": "GNT-M-001",
+    "precio": 18000,
+    "stock": 2500,
+    "stockStatus": "available",
+    "fechaVencimiento": "2026-06-30",
+    "ubicacion": "Bodega Principal - Estantería B2",
+    "categoria": "Protección Personal"
+  },
+  {
+    "productoId": "prod-003",
+    "nombre": "Jeringas Desechables 5ml",
+    "sku": "JNG-5ML",
+    "precio": 1200,
+    "stock": 800,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2025-08-15",
+    "ubicacion": "Bodega Secundaria - Estantería C3",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-004",
+    "nombre": "Agujas Hipodérmicas 21G",
+    "sku": "AGU-21G",
+    "precio": 800,
+    "stock": 150,
+    "stockStatus": "low",
+    "fechaVencimiento": "2025-09-20",
+    "ubicacion": "Bodega Secundaria - Estantería C4",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-005",
+    "nombre": "Batas Quirúrgicas Desechables",
+    "sku": "BAT-QRG",
+    "precio": 35000,
+    "stock": 1200,
+    "stockStatus": "available",
+    "fechaVencimiento": "2026-03-31",
+    "ubicacion": "Bodega Principal - Estantería A2",
+    "categoria": "Protección Personal"
+  },
+  {
+    "productoId": "prod-006",
+    "nombre": "Gorros Quirúrgicos Desechables",
+    "sku": "GOR-QRG",
+    "precio": 3500,
+    "stock": 80,
+    "stockStatus": "low",
+    "fechaVencimiento": "2025-11-30",
+    "ubicacion": "Bodega Principal - Estantería A3",
+    "categoria": "Protección Personal"
+  },
+  {
+    "productoId": "prod-007",
+    "nombre": "Algodón Estéril 100g",
+    "sku": "ALG-100G",
+    "precio": 4500,
+    "stock": 600,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2025-10-15",
+    "ubicacion": "Bodega Secundaria - Estantería D1",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-008",
+    "nombre": "Gasas Estériles 10x10cm",
+    "sku": "GAS-10X10",
+    "precio": 2800,
+    "stock": 2000,
+    "stockStatus": "available",
+    "fechaVencimiento": "2026-01-31",
+    "ubicacion": "Bodega Principal - Estantería D2",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-009",
+    "nombre": "Alcohol Isopropílico 70% 500ml",
+    "sku": "ALC-70-500",
+    "precio": 5500,
+    "stock": 450,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2025-12-31",
+    "ubicacion": "Bodega Secundaria - Estantería E1",
+    "categoria": "Desinfección"
+  },
+  {
+    "productoId": "prod-010",
+    "nombre": "Clorhexidina Gluconato 2% 500ml",
+    "sku": "CLX-2-500",
+    "precio": 12500,
+    "stock": 300,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2026-04-30",
+    "ubicacion": "Bodega Secundaria - Estantería E2",
+    "categoria": "Desinfección"
+  },
+  {
+    "productoId": "prod-011",
+    "nombre": "Termómetro Digital Infrarrojo",
+    "sku": "TERM-DIG-INF",
+    "precio": 95000,
+    "stock": 25,
+    "stockStatus": "low",
+    "fechaVencimiento": "2027-12-31",
+    "ubicacion": "Bodega Principal - Estantería F1",
+    "categoria": "Equipamiento"
+  },
+  {
+    "productoId": "prod-012",
+    "nombre": "Oxímetro de Pulso Portátil",
+    "sku": "OXI-PORT",
+    "precio": 125000,
+    "stock": 40,
+    "stockStatus": "low",
+    "fechaVencimiento": "2027-06-30",
+    "ubicacion": "Bodega Principal - Estantería F2",
+    "categoria": "Equipamiento"
+  },
+  {
+    "productoId": "prod-013",
+    "nombre": "Vendas Elásticas 10cm x 5m",
+    "sku": "VEN-ELAS-10",
+    "precio": 6500,
+    "stock": 350,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2026-08-31",
+    "ubicacion": "Bodega Secundaria - Estantería G1",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-014",
+    "nombre": "Esparadrapo Hipoalergénico 2.5cm",
+    "sku": "ESP-HIP-25",
+    "precio": 3200,
+    "stock": 500,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2025-11-30",
+    "ubicacion": "Bodega Secundaria - Estantería G2",
+    "categoria": "Insumos Médicos"
+  },
+  {
+    "productoId": "prod-015",
+    "nombre": "Solución Salina 0.9% 500ml",
+    "sku": "SAL-09-500",
+    "precio": 4500,
+    "stock": 1000,
+    "stockStatus": "available",
+    "fechaVencimiento": "2025-12-31",
+    "ubicacion": "Bodega Principal - Estantería H1",
+    "categoria": "Medicamentos"
+  },
+  {
+    "productoId": "prod-016",
+    "nombre": "Agua Destilada Estéril 500ml",
+    "sku": "AGU-DEST-500",
+    "precio": 3800,
+    "stock": 750,
+    "stockStatus": "available",
+    "fechaVencimiento": "2025-10-31",
+    "ubicacion": "Bodega Principal - Estantería H2",
+    "categoria": "Medicamentos"
+  },
+  {
+    "productoId": "prod-017",
+    "nombre": "Protectores Oculares Transparentes",
+    "sku": "PRO-OCU-TRANS",
+    "precio": 8500,
+    "stock": 200,
+    "stockStatus": "low",
+    "fechaVencimiento": "2026-05-31",
+    "ubicacion": "Bodega Principal - Estantería I1",
+    "categoria": "Protección Personal"
+  },
+  {
+    "productoId": "prod-018",
+    "nombre": "Camillas Plegables Portátiles",
+    "sku": "CAM-PLEG",
+    "precio": 450000,
+    "stock": 8,
+    "stockStatus": "low",
+    "fechaVencimiento": "2028-12-31",
+    "ubicacion": "Bodega Principal - Estantería J1",
+    "categoria": "Equipamiento"
+  },
+  {
+    "productoId": "prod-019",
+    "nombre": "Estetoscopio Dual Head",
+    "sku": "EST-DUAL",
+    "precio": 85000,
+    "stock": 15,
+    "stockStatus": "low",
+    "fechaVencimiento": "2027-12-31",
+    "ubicacion": "Bodega Principal - Estantería K1",
+    "categoria": "Equipamiento"
+  },
+  {
+    "productoId": "prod-020",
+    "nombre": "Tapabocas N95 Caja x 50 unidades",
+    "sku": "TAP-N95-50",
+    "precio": 125000,
+    "stock": 120,
+    "stockStatus": "medium",
+    "fechaVencimiento": "2025-12-31",
+    "ubicacion": "Bodega Principal - Estantería A4",
+    "categoria": "Protección Personal"
+  }
+]
+

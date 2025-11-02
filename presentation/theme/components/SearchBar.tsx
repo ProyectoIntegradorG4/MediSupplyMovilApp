@@ -12,16 +12,23 @@ interface SearchBarProps extends TextInputProps {
   onSearch?: (text: string) => void;
 }
 
-export default function SearchBar({ onSearch, ...rest }: SearchBarProps) {
+export default function SearchBar({ onSearch, value, onChangeText, ...rest }: SearchBarProps) {
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
 
   const [isActive, setIsActive] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [internalSearchText, setInternalSearchText] = useState('');
+
+  // Usar valor controlado si se proporciona, sino usar estado interno
+  const searchText = value !== undefined ? value : internalSearchText;
 
   const handleChangeText = (text: string) => {
-    setSearchText(text);
+    if (onChangeText) {
+      onChangeText(text);
+    } else {
+      setInternalSearchText(text);
+    }
     onSearch?.(text);
   };
 
