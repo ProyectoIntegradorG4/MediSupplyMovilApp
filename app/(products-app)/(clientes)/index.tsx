@@ -1,62 +1,187 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
+import ClientCard from '@/presentation/theme/components/ClientCard';
+import SearchBar from '@/presentation/theme/components/SearchBar';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ThemedView } from '@/presentation/theme/components/ThemedView';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, View, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
+import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
+import { Cliente } from '@/core/clientes/interface/cliente';
 
 const ClientesScreen = () => {
   const { user } = useAuthStore();
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState('');
+
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    loadClientes();
+  }, [user?.id]);
+
+  /**
+   * Carga los clientes asignados al gerente desde el backend
+   */
+  const loadClientes = async () => {
+    if (!user?.id) {
+      console.log('⚠️ No hay usuario autenticado');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const gerenteId = parseInt(user.id);
+      console.log(`📋 Cargando clientes del gerente ${gerenteId}...`);
+
+      const data = await fetchClientesDeGerente(gerenteId);
+      
+      console.log(`✅ ${data.total} clientes cargados`);
+      setClientes(data.clientes);
+    } catch (err) {
+      console.error('❌ Error al cargar clientes:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar clientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Recarga los clientes (pull to refresh)
+   */
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadClientes();
+    setRefreshing(false);
+  };
+
+  /**
+   * Filtrar clientes basado en la búsqueda local
+   * Búsqueda en nombre, ciudad, dirección y contacto
+   */
+  const filteredClientes = clientes.filter(
+    (cliente) =>
+      cliente.nombre_comercial.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.razon_social.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.ciudad?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.direccion?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.contacto_principal?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.tipo_institucion.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const handleRegisterVisit = (clientName: string) => {
+    console.log(`Registrar visita para: ${clientName}`);
+    // TODO: Implementar navegación a pantalla de registro de visita
+  };
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-    >
-      <View style={styles.header}>
-        <ThemedText style={styles.subtitle}>
-          Bienvenido, {user?.fullName || user?.email}
-        </ThemedText>
-        <ThemedText style={styles.roleText}>
-          Rol: {user?.roles?.join(', ') || 'Sin rol'}
-        </ThemedText>
-      </View>
-
-      <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Funcionalidades de Gerente de Cuenta</ThemedText>
-        
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📋 Lista de Clientes</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Gestiona y visualiza todos los clientes institucionales registrados
+    <ThemedView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#007AFF"
+          />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <ThemedText style={styles.title}>Mis Clientes</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            {user?.fullName || user?.email}
           </ThemedText>
         </View>
 
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>➕ Nuevo Cliente</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Registra nuevos clientes institucionales en el sistema
-          </ThemedText>
+        {/* Barra de búsqueda */}
+        <View style={styles.searchContainer}>
+          <SearchBar
+            placeholder="Buscar cliente, ciudad, contacto..."
+            value={searchText}
+            onChangeText={setSearchText}
+            onSearch={setSearchText}
+          />
         </View>
 
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📊 Reportes</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Genera reportes de clientes y estadísticas de ventas
-          </ThemedText>
-        </View>
+        {/* Estado de carga inicial */}
+        {loading && !refreshing && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <ThemedText style={styles.loadingText}>
+              Cargando clientes...
+            </ThemedText>
+          </View>
+        )}
 
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>⚙️ Configuración</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Configura parámetros y preferencias del sistema
-          </ThemedText>
-        </View>
-      </View>
-    </ScrollView>
+        {/* Estado de error */}
+        {error && !loading && (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>
+              {error}
+            </ThemedText>
+            <Pressable 
+              onPress={loadClientes}
+              style={styles.retryButton as any}
+            >
+              <ThemedText style={styles.retryText}>
+                Reintentar
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
+        {/* Contador de resultados */}
+        {!loading && !error && (
+          <View style={styles.resultCountContainer}>
+            <ThemedText style={styles.resultCount}>
+              {filteredClientes.length} {filteredClientes.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
+              {clientes.length !== filteredClientes.length && ` de ${clientes.length} total`}
+            </ThemedText>
+          </View>
+        )}
+
+        {/* Lista de clientes */}
+        {!loading && !error && (
+          <View style={styles.clientList}>
+            {filteredClientes.length > 0 ? (
+              filteredClientes.map((cliente) => (
+                <ClientCard
+                  key={cliente.cliente_id}
+                  cliente={cliente}
+                  onRegisterVisit={() => handleRegisterVisit(cliente.nombre_comercial)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <ThemedText style={styles.emptyText}>
+                  No se encontraron clientes
+                </ThemedText>
+                <ThemedText style={styles.emptySubtext}>
+                  {searchText 
+                    ? 'Intenta con otra búsqueda' 
+                    : 'No tienes clientes asignados'}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scrollView: {
     flex: 1,
   },
   scrollContent: {
@@ -65,44 +190,80 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingTop: 16,
-    alignItems: 'center',
+    paddingBottom: 12,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    marginTop: 8,
+    fontSize: 14,
     opacity: 0.7,
   },
-  roleText: {
-    fontSize: 14,
-    marginTop: 4,
-    fontWeight: 'bold',
-    color: '#007AFF',
+  searchContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  content: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  featureCard: {
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    padding: 16,
-    borderRadius: 12,
+  resultCountContainer: {
+    paddingHorizontal: 20,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
   },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  featureDescription: {
+  resultCount: {
     fontSize: 14,
-    opacity: 0.8,
-    lineHeight: 20,
+    opacity: 0.6,
+    fontWeight: '500',
+  },
+  clientList: {
+    paddingHorizontal: 20,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    opacity: 0.6,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    opacity: 0.4,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+    opacity: 0.6,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
