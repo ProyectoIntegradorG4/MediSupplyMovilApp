@@ -3,83 +3,79 @@ import ClientCard from '@/presentation/theme/components/ClientCard';
 import SearchBar from '@/presentation/theme/components/SearchBar';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import { ThemedView } from '@/presentation/theme/components/ThemedView';
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-
-// Datos simulados de clientes
-const mockClientes = [
-  {
-    id: '1',
-    name: 'Hospital San Rafael',
-    address: 'Calle 45 #23-67, Bogotá',
-    phone: '+57 310 456 7890',
-    doctor: 'Dr. Carlos Méndez',
-    lastVisit: '15/10/2025',
-    type: 'Hospital' as const,
-  },
-  {
-    id: '2',
-    name: 'Farmacia Santa María',
-    address: 'Av. El Dorado #89-23, Bogotá',
-    phone: '+57 320 123 4567',
-    doctor: 'Dra. Ana Rodríguez',
-    lastVisit: '18/10/2025',
-    type: 'Farmacia' as const,
-  },
-  {
-    id: '3',
-    name: 'Clínica Los Andes',
-    address: 'Carrera 15 #123-45, Medellín',
-    phone: '+57 315 789 0123',
-    doctor: 'Dr. Luis García',
-    lastVisit: '20/10/2025',
-    type: 'Clinica' as const,
-  },
-  {
-    id: '4',
-    name: 'Hospital Universitario del Valle',
-    address: 'Calle 5 #36-08, Cali',
-    phone: '+57 318 234 5678',
-    doctor: 'Dra. María Fernández',
-    lastVisit: '22/10/2025',
-    type: 'Hospital' as const,
-  },
-  {
-    id: '5',
-    name: 'Farmacia Vida Sana',
-    address: 'Calle 72 #10-34, Bogotá',
-    phone: '+57 312 345 6789',
-    doctor: 'Dr. Pedro Ramírez',
-    lastVisit: '23/10/2025',
-    type: 'Farmacia' as const,
-  },
-  {
-    id: '6',
-    name: 'Clínica del Country',
-    address: 'Carrera 16 #82-57, Bogotá',
-    phone: '+57 317 890 1234',
-    doctor: 'Dra. Laura Martínez',
-    lastVisit: '25/10/2025',
-    type: 'Clinica' as const,
-  },
-];
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, View, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
+import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
+import { Cliente } from '@/core/clientes/interface/cliente';
 
 const ClientesScreen = () => {
   const { user } = useAuthStore();
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState('');
 
-  // Filtrar clientes basado en la búsqueda
-  const filteredClientes = mockClientes.filter(
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    loadClientes();
+  }, [user?.id]);
+
+  /**
+   * Carga los clientes asignados al gerente desde el backend
+   */
+  const loadClientes = async () => {
+    if (!user?.id) {
+      console.log('⚠️ No hay usuario autenticado');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const gerenteId = parseInt(user.id);
+      console.log(`📋 Cargando clientes del gerente ${gerenteId}...`);
+
+      const data = await fetchClientesDeGerente(gerenteId);
+      
+      console.log(`✅ ${data.total} clientes cargados`);
+      setClientes(data.clientes);
+    } catch (err) {
+      console.error('❌ Error al cargar clientes:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar clientes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Recarga los clientes (pull to refresh)
+   */
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadClientes();
+    setRefreshing(false);
+  };
+
+  /**
+   * Filtrar clientes basado en la búsqueda local
+   * Búsqueda en nombre, ciudad, dirección y contacto
+   */
+  const filteredClientes = clientes.filter(
     (cliente) =>
-      cliente.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      cliente.address.toLowerCase().includes(searchText.toLowerCase()) ||
-      cliente.doctor.toLowerCase().includes(searchText.toLowerCase()) ||
-      cliente.type.toLowerCase().includes(searchText.toLowerCase())
+      cliente.nombre_comercial.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.razon_social.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.ciudad?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.direccion?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.contacto_principal?.toLowerCase().includes(searchText.toLowerCase()) ||
+      cliente.tipo_institucion.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const handleRegisterVisit = (clientName: string) => {
     console.log(`Registrar visita para: ${clientName}`);
-    // Aquí puedes agregar la navegación o lógica para registrar visita
+    // TODO: Implementar navegación a pantalla de registro de visita
   };
 
   return (
@@ -88,10 +84,17 @@ const ClientesScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#007AFF"
+          />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Clientes</ThemedText>
+          <ThemedText style={styles.title}>Mis Clientes</ThemedText>
           <ThemedText style={styles.subtitle}>
             {user?.fullName || user?.email}
           </ThemedText>
@@ -100,46 +103,75 @@ const ClientesScreen = () => {
         {/* Barra de búsqueda */}
         <View style={styles.searchContainer}>
           <SearchBar
-            placeholder="Buscar cliente, dirección, doctor..."
+            placeholder="Buscar cliente, ciudad, contacto..."
             value={searchText}
             onChangeText={setSearchText}
             onSearch={setSearchText}
           />
         </View>
 
+        {/* Estado de carga inicial */}
+        {loading && !refreshing && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <ThemedText style={styles.loadingText}>
+              Cargando clientes...
+            </ThemedText>
+          </View>
+        )}
+
+        {/* Estado de error */}
+        {error && !loading && (
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>
+              {error}
+            </ThemedText>
+            <Pressable 
+              onPress={loadClientes}
+              style={styles.retryButton as any}
+            >
+              <ThemedText style={styles.retryText}>
+                Reintentar
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
         {/* Contador de resultados */}
-        <View style={styles.resultCountContainer}>
-          <ThemedText style={styles.resultCount}>
-            {filteredClientes.length} {filteredClientes.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
-          </ThemedText>
-        </View>
+        {!loading && !error && (
+          <View style={styles.resultCountContainer}>
+            <ThemedText style={styles.resultCount}>
+              {filteredClientes.length} {filteredClientes.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
+              {clientes.length !== filteredClientes.length && ` de ${clientes.length} total`}
+            </ThemedText>
+          </View>
+        )}
 
         {/* Lista de clientes */}
-        <View style={styles.clientList}>
-          {filteredClientes.length > 0 ? (
-            filteredClientes.map((cliente) => (
-              <ClientCard
-                key={cliente.id}
-                name={cliente.name}
-                address={cliente.address}
-                phone={cliente.phone}
-                doctor={cliente.doctor}
-                lastVisit={cliente.lastVisit}
-                type={cliente.type}
-                onRegisterVisit={() => handleRegisterVisit(cliente.name)}
-              />
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <ThemedText style={styles.emptyText}>
-                No se encontraron clientes
-              </ThemedText>
-              <ThemedText style={styles.emptySubtext}>
-                Intenta con otra búsqueda
-              </ThemedText>
-            </View>
-          )}
-        </View>
+        {!loading && !error && (
+          <View style={styles.clientList}>
+            {filteredClientes.length > 0 ? (
+              filteredClientes.map((cliente) => (
+                <ClientCard
+                  key={cliente.cliente_id}
+                  cliente={cliente}
+                  onRegisterVisit={() => handleRegisterVisit(cliente.nombre_comercial)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <ThemedText style={styles.emptyText}>
+                  No se encontraron clientes
+                </ThemedText>
+                <ThemedText style={styles.emptySubtext}>
+                  {searchText 
+                    ? 'Intenta con otra búsqueda' 
+                    : 'No tienes clientes asignados'}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </ThemedView>
   );
@@ -199,6 +231,39 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     opacity: 0.4,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+    opacity: 0.6,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -2,36 +2,43 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { Cliente, TipoInstitucion } from '@/core/clientes/interface/cliente';
 
 interface ClientCardProps {
-    name: string;
-    address: string;
-    phone: string;
-    doctor: string;
-    lastVisit: string;
-    type: 'Hospital' | 'Farmacia' | 'Clinica';
+    cliente: Cliente;
     onRegisterVisit?: () => void;
 }
 
 export default function ClientCard({
-    name,
-    address,
-    phone,
-    doctor,
-    lastVisit,
-    type,
+    cliente,
     onRegisterVisit,
 }: ClientCardProps) {
     const primaryColor = useThemeColor({}, 'primary');
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
 
+    // Construir dirección completa
+    const fullAddress = [
+        cliente.direccion,
+        cliente.ciudad,
+        cliente.departamento
+    ].filter(Boolean).join(', ') || 'Sin dirección';
+
+    // Formatear última actualización
+    const lastUpdate = cliente.fecha_actualizacion 
+        ? new Date(cliente.fecha_actualizacion).toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+          })
+        : 'Sin fecha';
+
     return (
         <View style={[styles.card, { backgroundColor: primaryColor + '0D' }]}>
             {/* Header con nombre y tipo */}
             <View style={styles.header}>
                 <Text style={[styles.title, { color: textColor }]} numberOfLines={2}>
-                    {name}
+                    {cliente.nombre_comercial}
                 </Text>
                 <View
                     style={[
@@ -40,7 +47,7 @@ export default function ClientCard({
                     ]}
                 >
                     <Text style={[styles.typeText, { color: primaryColor }]}>
-                        {type}
+                        {cliente.tipo_institucion}
                     </Text>
                 </View>
             </View>
@@ -55,33 +62,52 @@ export default function ClientCard({
                         style={styles.icon}
                     />
                     <Text style={[styles.infoText, { color: textColor }]} numberOfLines={2}>
-                        {address}
+                        {fullAddress}
                     </Text>
                 </View>
 
-                <View style={styles.infoRow}>
-                    <Ionicons
-                        name="call"
-                        size={20}
-                        color={textColor}
-                        style={styles.icon}
-                    />
-                    <Text style={[styles.infoText, { color: textColor }]}>
-                        {phone}
-                    </Text>
-                </View>
+                {cliente.telefono && (
+                    <View style={styles.infoRow}>
+                        <Ionicons
+                            name="call"
+                            size={20}
+                            color={textColor}
+                            style={styles.icon}
+                        />
+                        <Text style={[styles.infoText, { color: textColor }]}>
+                            {cliente.telefono}
+                        </Text>
+                    </View>
+                )}
 
-                <View style={styles.infoRow}>
-                    <Ionicons
-                        name="person"
-                        size={20}
-                        color={textColor}
-                        style={styles.icon}
-                    />
-                    <Text style={[styles.infoText, { color: textColor }]} numberOfLines={1}>
-                        {doctor}
-                    </Text>
-                </View>
+                {cliente.contacto_principal && (
+                    <View style={styles.infoRow}>
+                        <Ionicons
+                            name="person"
+                            size={20}
+                            color={textColor}
+                            style={styles.icon}
+                        />
+                        <Text style={[styles.infoText, { color: textColor }]} numberOfLines={1}>
+                            {cliente.contacto_principal}
+                            {cliente.cargo_contacto && ` - ${cliente.cargo_contacto}`}
+                        </Text>
+                    </View>
+                )}
+
+                {cliente.email && (
+                    <View style={styles.infoRow}>
+                        <Ionicons
+                            name="mail"
+                            size={20}
+                            color={textColor}
+                            style={styles.icon}
+                        />
+                        <Text style={[styles.infoText, { color: textColor }]} numberOfLines={1}>
+                            {cliente.email}
+                        </Text>
+                    </View>
+                )}
 
                 <View style={styles.infoRow}>
                     <Ionicons
@@ -91,7 +117,7 @@ export default function ClientCard({
                         style={styles.icon}
                     />
                     <Text style={[styles.infoText, { color: textColor }]}>
-                        Última Visita: {lastVisit}
+                        Actualizado: {lastUpdate}
                     </Text>
                 </View>
             </View>
