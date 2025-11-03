@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { Fonts, BorderRadius, Spacing, FontSizes } from '@/constants/theme';
 
 interface Props extends TextInputProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -17,19 +18,24 @@ interface Props extends TextInputProps {
 const ThemedTextInput = ({ icon, error, ...rest }: Props) => {
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
+  const borderColor = useThemeColor({}, 'border');
+  const borderActiveColor = useThemeColor({}, 'borderActive');
+  const errorColor = useThemeColor({}, 'error');
+  const placeholderColor = useThemeColor({}, 'placeholder');
+  const errorTextColor = useThemeColor({}, 'errorText');
 
   const [isActive, setIsActive] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  // Color del borde: rojo si hay error, color primario si está activo, gris si no
-  const borderColor = error ? '#e74c3c' : (isActive ? primaryColor : '#ccc');
+  // Color del borde: rojo si hay error, color primario si está activo, color de borde por defecto
+  const currentBorderColor = error ? errorColor : (isActive ? borderActiveColor : borderColor);
 
   return (
-    <View style={{ marginBottom: 10 }}>
+    <View style={{ marginBottom: Spacing.lg }}>
       <View
         style={{
           ...styles.border,
-          borderColor: borderColor,
+          borderColor: currentBorderColor,
         }}
         onTouchStart={() => inputRef.current?.focus()}
       >
@@ -37,28 +43,30 @@ const ThemedTextInput = ({ icon, error, ...rest }: Props) => {
           <Ionicons
             name={icon}
             size={24}
-            color={error ? '#e74c3c' : textColor}
-            style={{ marginRight: 10 }}
+            color={error ? errorColor : textColor}
+            style={{ marginRight: Spacing.lg }}
           />
         )}
 
         <TextInput
           ref={inputRef}
-          placeholderTextColor="#5c5c5c"
+          placeholderTextColor={placeholderColor}
           onFocus={() => setIsActive(true)}
           onBlur={() => setIsActive(false)}
-          style={{
-            color: textColor,
-            marginRight: 10,
-            flex: 1,
-          }}
+          style={[
+            styles.input,
+            {
+              color: textColor,
+              marginRight: Spacing.lg,
+            },
+          ]}
           {...rest}
         />
       </View>
 
       {/* Mostrar mensaje de error */}
       {error ? (
-        <Text style={styles.errorText}>
+        <Text style={[styles.errorText, { color: errorTextColor }]}>
           {error}
         </Text>
       ) : null}
@@ -70,15 +78,20 @@ export default ThemedTextInput;
 const styles = StyleSheet.create({
   border: {
     borderWidth: 1,
-    borderRadius: 5,
-    padding: 5,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  input: {
+    flex: 1,
+    fontFamily: Fonts.regular,
+    fontSize: FontSizes.base,
+  },
   errorText: {
-    color: '#e74c3c',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 5,
+    fontSize: FontSizes.xs,
+    marginTop: Spacing.xs,
+    marginLeft: Spacing.sm,
+    fontFamily: Fonts.regular,
   },
 });

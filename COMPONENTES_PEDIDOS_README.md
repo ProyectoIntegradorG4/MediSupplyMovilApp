@@ -278,7 +278,7 @@ Para verificar que todo funciona correctamente:
 
 - **Guía de componentes:** Ver otros componentes en `presentation/theme/components/`
 - **Hooks de tema:** `presentation/theme/hooks/useThemeColor.ts`
-- **Colores:** `constants/Colors.ts`
+- **Colores:** `constants/theme.ts`
 - **Iconos:** [@expo/vector-icons](https://icons.expo.fyi/)
 
 ---

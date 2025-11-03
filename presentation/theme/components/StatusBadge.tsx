@@ -1,5 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useThemeColor } from '../hooks/useThemeColor';
+import { Fonts, BorderRadius, Spacing, FontSizes } from '@/constants/theme';
 
 type OrderStatus = 'pendiente' | 'enviado' | 'entregado' | 'cancelado';
 
@@ -8,25 +10,34 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
+  const badgePendingBg = useThemeColor({}, 'badgePendingBg');
+  const badgePendingText = useThemeColor({}, 'badgePendingText');
+  const badgeSentBg = useThemeColor({}, 'badgeSentBg');
+  const badgeSentText = useThemeColor({}, 'badgeSentText');
+  const badgeDeliveredBg = useThemeColor({}, 'badgeDeliveredBg');
+  const badgeDeliveredText = useThemeColor({}, 'badgeDeliveredText');
+  const badgeCancelledBg = useThemeColor({}, 'badgeCancelledBg');
+  const badgeCancelledText = useThemeColor({}, 'badgeCancelledText');
+
   const statusConfig = {
     pendiente: {
-      backgroundColor: '#FFF3CD',
-      textColor: '#856404',
+      backgroundColor: badgePendingBg,
+      textColor: badgePendingText,
       label: 'Pendiente',
     },
     enviado: {
-      backgroundColor: '#D1ECF1',
-      textColor: '#0C5460',
+      backgroundColor: badgeSentBg,
+      textColor: badgeSentText,
       label: 'Enviado',
     },
     entregado: {
-      backgroundColor: '#D4EDDA',
-      textColor: '#155724',
+      backgroundColor: badgeDeliveredBg,
+      textColor: badgeDeliveredText,
       label: 'Entregado',
     },
     cancelado: {
-      backgroundColor: '#F8D7DA',
-      textColor: '#721C24',
+      backgroundColor: badgeCancelledBg,
+      textColor: badgeCancelledText,
       label: 'Cancelado',
     },
   };
@@ -44,16 +55,17 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 24,
-    paddingVertical: 2,
-    borderRadius: 15,
+    paddingHorizontal: Spacing['2xl'],
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
-    fontSize: 16,
+    fontSize: FontSizes.base,
     fontWeight: '500',
     lineHeight: 24,
+    fontFamily: Fonts.regular,
   },
 });
 

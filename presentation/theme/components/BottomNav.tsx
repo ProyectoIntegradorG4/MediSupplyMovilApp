@@ -21,6 +21,7 @@ interface BottomNavProps extends ViewProps {
 function NavItem({ icon, label, active = false, onPress }: NavItemProps) {
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
+  const textOnPrimary = useThemeColor({}, 'textOnPrimary');
 
   return (
     <Pressable
@@ -39,14 +40,14 @@ function NavItem({ icon, label, active = false, onPress }: NavItemProps) {
         <Ionicons
           name={icon}
           size={28}
-          color={active ? '#FFFFFF' : textColor}
+          color={active ? textOnPrimary : textColor}
         />
       </View>
       <Text
         style={[
           styles.label,
           {
-            color: active ? '#FFFFFF' : textColor,
+            color: active ? textOnPrimary : textColor,
             fontWeight: active ? 'bold' : 'normal',
           },
         ]}

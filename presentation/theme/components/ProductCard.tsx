@@ -9,6 +9,7 @@ import {
     View,
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { Fonts } from '@/constants/theme';
 
 interface ProductCardProps {
     name: string;
@@ -45,12 +46,26 @@ export default function ProductCard({
     const primaryColor = useThemeColor({}, 'primary');
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
+    const cardBorderColor = useThemeColor({}, 'cardBorder');
+    const imageBackground = useThemeColor({}, 'imageBackground');
+    const iconMuted = useThemeColor({}, 'iconMuted');
+    const stockAvailable = useThemeColor({}, 'stockAvailable');
+    const stockLow = useThemeColor({}, 'stockLow');
+    const stockMedium = useThemeColor({}, 'stockMedium');
+    const stockUnavailable = useThemeColor({}, 'stockUnavailable');
+    const successBackground = useThemeColor({}, 'successBackground');
+    const successText = useThemeColor({}, 'successText');
+    const errorBackground = useThemeColor({}, 'errorBackground');
+    const errorText = useThemeColor({}, 'errorText');
+    const warningBackground = useThemeColor({}, 'warningBackground');
+    const warningText = useThemeColor({}, 'warningText');
+    const textOnPrimary = useThemeColor({}, 'textOnPrimary');
 
-    // Colores para los badges de stock
+    // Colores para los badges de stock usando el tema
     const stockBadgeStyles = {
-        available: { bg: '#D4EDDA', text: '#155724' },
-        low: { bg: '#F8D7DA', text: '#721C24' },
-        medium: { bg: '#FFF3CD', text: '#856404' },
+        available: { bg: successBackground, text: successText },
+        low: { bg: errorBackground, text: errorText },
+        medium: { bg: warningBackground, text: warningText },
     };
 
     const stockBadgeText = {
@@ -59,11 +74,11 @@ export default function ProductCard({
         medium: 'Stock medio',
     };
 
-    // Colores para los botones según el estado del stock
+    // Colores para los botones según el estado del stock usando el tema
     const buttonColors = {
-        available: '#28a745',
-        low: '#ffc107',
-        medium: primaryColor,
+        available: stockAvailable,
+        low: stockLow,
+        medium: stockMedium,
     };
 
     const handleQuantityChange = (text: string) => {
@@ -110,16 +125,19 @@ export default function ProductCard({
         <View
             style={[
                 styles.card,
-                { backgroundColor: primaryColor + '0D', borderColor: primaryColor + '80' },
+                { 
+                    backgroundColor: primaryColor + '0D', 
+                    borderColor: cardBorderColor,
+                },
             ]}
         >
             {/* Sección superior: Imagen y datos principales */}
             <View style={styles.topSection}>
-                <View style={[styles.imageContainer, { backgroundColor: '#f0f0f0' }]}>
+                <View style={[styles.imageContainer, { backgroundColor: imageBackground }]}>
                     {imageUrl ? (
                         <Image source={{ uri: imageUrl }} style={styles.image} />
                     ) : (
-                        <Ionicons name="cube-outline" size={40} color="#999" />
+                        <Ionicons name="cube-outline" size={40} color={iconMuted} />
                     )}
                 </View>
 
@@ -195,15 +213,15 @@ export default function ProductCard({
                             styles.addButton,
                             {
                                 backgroundColor: isAdded
-                                    ? '#28a745'
+                                    ? stockAvailable
                                     : stock === 0
-                                    ? '#6c757d'
+                                    ? stockUnavailable
                                     : buttonColors[stockStatus],
                                 opacity: pressed ? 0.7 : quantity === 0 || stock === 0 ? 0.5 : 1,
                             },
                         ]}
                     >
-                        <Text style={styles.buttonText}>
+                        <Text style={[styles.buttonText, { color: textOnPrimary }]}>
                             {stock === 0 ? 'Sin Stock' : isAdded ? 'Agregado' : 'Agregar'}
                         </Text>
                     </Pressable>
@@ -317,8 +335,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     buttonText: {
-        color: '#FFFFFF',
         fontSize: 15,
         fontWeight: '600',
+        fontFamily: Fonts.regular,
     },
 });
