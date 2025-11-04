@@ -4,4 +4,5 @@ export interface User {
   fullName: string;
   isActive: boolean;
   roles: string[];
+  nit?: string; // NIT del usuario para uso en pedidos
 }

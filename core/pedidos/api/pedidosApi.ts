@@ -1,37 +1,114 @@
 /**
- * API Mock para Pedidos
+ * API Client para Pedidos
  * 
- * Funciones mock para simular API calls hasta que el backend esté disponible
+ * Conectado al backend pedidos-service y product-service
  * Cumple con requisitos de las HUs HU-MOV-008 y HU-MOV-005
  * 
  * @module core/pedidos/api/pedidosApi
  */
 
-import { loadMockData } from '@/helpers/mockDataLoader';
+import { CONFIG } from '@/constants/config';
+import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
+import axios from 'axios';
 import {
   Pedido,
   PedidoCreateRequest,
+  PedidoCreateRequestBackend,
   PedidoCreateResponse,
   PedidosFilter,
   PedidosListResponse,
   PedidoItem,
-  generateRefNumber,
-  calculatePedidoTotal,
   formatAmount,
-  validatePedidoItems,
 } from '../interface/pedido';
 
-// Tipo para productos mock (compatible con ProductCard)
-interface Product {
+// Tipo para productos (compatible con ProductCard)
+export interface Product {
   productoId: string;
   nombre: string;
   sku: string;
   precio: number;
   stock: number;
-  stockStatus: 'available' | 'low' | 'medium';
-  fechaVencimiento: string;
-  ubicacion: string;
+  stockStatus?: 'available' | 'low' | 'medium';
+  fechaVencimiento?: string;
+  ubicacion?: string;
   categoria?: string;
+}
+
+/**
+ * Cliente Axios configurado para peticiones a pedidos-service y product-service
+ * Base URL: API Gateway (puerto 80)
+ */
+const pedidosApi = axios.create({
+  baseURL: CONFIG.API.GATEWAY_URL,
+  timeout: CONFIG.API.TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+/**
+ * Interceptor para agregar token JWT y headers de usuario automáticamente
+ */
+pedidosApi.interceptors.request.use(async (config) => {
+  const token = await SecureStorageAdapter.getItem('token');
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Headers requeridos por pedidos-service
+  // Estos valores deberían venir del JWT token decodificado en producción
+  // Por ahora, intentamos obtenerlos del token o los seteamos manualmente
+  const userData = await SecureStorageAdapter.getItem('user');
+  if (userData) {
+    try {
+      const user = JSON.parse(userData);
+      if (user.id && !config.headers['usuario-id']) {
+        config.headers['usuario-id'] = String(user.id);
+      }
+      if (user.roles && user.roles.length > 0 && !config.headers['rol-usuario']) {
+        // Mapear roles: 'gerente_cuenta' -> 'gerente_cuenta', otros -> 'admin' por defecto
+        const rol = user.roles.includes('gerente_cuenta') ? 'gerente_cuenta' :
+                    user.roles.includes('usuario_institucional') ? 'usuario_institucional' :
+                    'admin';
+        config.headers['rol-usuario'] = rol;
+      }
+      // Agregar NIT del usuario si está disponible (necesario para usuario_institucional)
+      if (user.nit && !config.headers['nit-usuario']) {
+        config.headers['nit-usuario'] = user.nit;
+      }
+    } catch (e) {
+      // Ignorar si no se puede parsear
+    }
+  }
+
+  return config;
+});
+
+/**
+ * Interceptor para logging en modo desarrollo
+ */
+if (CONFIG.DEBUG) {
+  pedidosApi.interceptors.request.use((config) => {
+    console.log(`🌐 [PEDIDOS API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    if (config.headers['usuario-id']) {
+      console.log(`   usuario-id: ${config.headers['usuario-id']}`);
+      console.log(`   rol-usuario: ${config.headers['rol-usuario']}`);
+    }
+    return config;
+  });
+
+  pedidosApi.interceptors.response.use(
+    (response) => {
+      console.log(`✅ [PEDIDOS API] ${response.status} ${response.config.url}`);
+      return response;
+    },
+    (error) => {
+      console.error(`❌ [PEDIDOS API] ${error.response?.status || 'ERROR'} ${error.config?.url}`);
+      console.error(`   Error:`, error.response?.data || error.message);
+      return Promise.reject(error);
+    }
+  );
 }
 
 // ========================================
@@ -40,49 +117,59 @@ interface Product {
 
 /**
  * Obtiene el catálogo de productos con inventario
- * Delay simulado < 2 segundos según HU
+ * Endpoint: GET /api/v1/productos (product-service)
  * 
  * @returns Array de productos con stock disponible
  */
 export const getProductsMock = async (): Promise<Product[]> => {
   try {
-    const products = await loadMockData<Product[]>('data/mock-products.json');
-    console.log(`✅ [PedidosAPI] Loaded ${products.length} products`);
-    return products;
-  } catch (error) {
+    const response = await pedidosApi.get('/api/v1/productos', {
+      params: {
+        estado_producto: 'activo',
+        page: 1,
+        page_size: 100, // Ajustar según necesidades
+      },
+    });
+
+    const productos = response.data.items || [];
+    
+    // Mapear al formato esperado por el frontend
+    return productos.map((p: any) => ({
+      productoId: p.productoId,
+      nombre: p.nombre,
+      sku: p.sku || `SKU-${p.productoId.substring(0, 8)}`,
+      precio: p.precio || 0.0,
+      stock: p.stock || 0,
+      stockStatus: (p.stock || 0) > 10 ? 'available' : (p.stock || 0) > 0 ? 'low' : 'medium',
+      fechaVencimiento: p.fechaVencimiento || undefined,
+      ubicacion: p.ubicacion || p.location || undefined,
+      categoria: p.categoria || undefined,
+    }));
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error loading products:', error);
-    throw new Error('Error al cargar productos del inventario');
+    throw new Error(error.response?.data?.detail || 'Error al cargar productos del inventario');
   }
 };
 
 /**
  * Valida stock disponible en tiempo real
+ * Endpoint: GET /api/productos/{producto_id}/inventario (product-service)
  * Cumple con requisito de respuesta < 2 segundos
  * 
- * @param sku SKU del producto
+ * @param productoId ID del producto (UUID)
  * @param cantidad Cantidad requerida
  * @returns Objeto con validez y stock disponible
  */
 export const checkStockMock = async (
-  sku: string,
+  productoId: string,
   cantidad: number
 ): Promise<{ valid: boolean; available: number; message?: string }> => {
   try {
-    // Simular delay de validación (< 500ms)
-    await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 400));
+    const response = await pedidosApi.get(`/api/productos/${productoId}/inventario`);
 
-    const products = await getProductsMock();
-    const product = products.find((p) => p.sku === sku);
+    const { cantidad_disponible } = response.data;
 
-    if (!product) {
-      return {
-        valid: false,
-        available: 0,
-        message: 'Producto no encontrado',
-      };
-    }
-
-    if (product.stock === 0) {
+    if (cantidad_disponible === 0) {
       return {
         valid: false,
         available: 0,
@@ -90,39 +177,74 @@ export const checkStockMock = async (
       };
     }
 
-    if (cantidad > product.stock) {
+    if (cantidad > cantidad_disponible) {
       return {
         valid: false,
-        available: product.stock,
-        message: `Stock insuficiente. Disponible: ${product.stock} unidades`,
+        available: cantidad_disponible,
+        message: `Stock insuficiente. Disponible: ${cantidad_disponible} unidades`,
       };
     }
 
     return {
       valid: true,
-      available: product.stock,
+      available: cantidad_disponible,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error checking stock:', error);
+    
+    if (error.response?.status === 404) {
+      return {
+        valid: false,
+        available: 0,
+        message: 'Producto no encontrado',
+      };
+    }
+    
     return {
       valid: false,
       available: 0,
-      message: 'Error al validar stock',
+      message: error.response?.data?.detail || 'Error al validar stock',
     };
   }
 };
 
 /**
  * Obtiene un producto por SKU
+ * Endpoint: GET /api/v1/productos?sku={sku} (product-service)
  * 
  * @param sku SKU del producto
  * @returns Producto o null si no existe
  */
 export const getProductBySkuMock = async (sku: string): Promise<Product | null> => {
   try {
-    const products = await getProductsMock();
-    return products.find((p) => p.sku === sku) || null;
-  } catch (error) {
+    const response = await pedidosApi.get('/api/v1/productos', {
+      params: {
+        sku: sku,
+        estado_producto: 'activo',
+        page: 1,
+        page_size: 1,
+      },
+    });
+
+    const productos = response.data.items || [];
+    
+    if (productos.length === 0) {
+      return null;
+    }
+
+    const p = productos[0];
+    return {
+      productoId: p.productoId,
+      nombre: p.nombre,
+      sku: p.sku || `SKU-${p.productoId.substring(0, 8)}`,
+      precio: p.precio || 0.0,
+      stock: p.stock || 0,
+      stockStatus: (p.stock || 0) > 10 ? 'available' : (p.stock || 0) > 0 ? 'low' : 'medium',
+      fechaVencimiento: p.fechaVencimiento || undefined,
+      ubicacion: p.ubicacion || p.location || undefined,
+      categoria: p.categoria || undefined,
+    };
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error getting product by SKU:', error);
     return null;
   }
@@ -134,63 +256,21 @@ export const getProductBySkuMock = async (sku: string): Promise<Product | null> 
 
 /**
  * Obtiene los clientes asignados a un gerente
- * Mock simplificado - en producción usaría clientesApi
+ * Endpoint: GET /api/v1/clientes/mis-clientes?gerente_id={id} (cliente-service)
  * 
  * @param gerenteId ID del gerente
  * @returns Array de clientes asignados
  */
 export const getClientesGerenteMock = async (gerenteId: number) => {
   try {
-    // En producción, esto usaría clientesApi.getClientes({ gerente_id: gerenteId })
-    // Por ahora, retornamos clientes mock hardcodeados
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const response = await pedidosApi.get('/api/v1/clientes/mis-clientes', {
+      params: {
+        gerente_id: gerenteId,
+      },
+    });
 
-    // Mock: gerente_id 1 tiene clientes 1, 2, 3, 4, 5
-    const mockClientes = [
-      {
-        cliente_id: 1,
-        nombre_comercial: 'Hospital Universitario San Ignacio',
-        tipo_institucion: 'Hospital',
-        telefono: '+57 300 123 4567',
-        contacto_principal: 'Dr. Juan Pérez',
-      },
-      {
-        cliente_id: 2,
-        nombre_comercial: 'Clínica Shaio',
-        tipo_institucion: 'Clínica',
-        telefono: '+57 310 987 6543',
-        contacto_principal: 'Dra. María García',
-      },
-      {
-        cliente_id: 3,
-        nombre_comercial: 'Hospital El Country',
-        tipo_institucion: 'Hospital',
-        telefono: '+57 320 456 7890',
-        contacto_principal: 'Dr. Carlos Rodríguez',
-      },
-      {
-        cliente_id: 4,
-        nombre_comercial: 'Centro Médico Los Rosales',
-        tipo_institucion: 'Centro Médico',
-        telefono: '+57 315 234 5678',
-        contacto_principal: 'Dr. Luis Martínez',
-      },
-      {
-        cliente_id: 5,
-        nombre_comercial: 'IPS Salud Total',
-        tipo_institucion: 'IPS',
-        telefono: '+57 318 345 6789',
-        contacto_principal: 'Dra. Ana López',
-      },
-    ];
-
-    // Filtrar por gerente (mock: todos para gerente_id 1)
-    if (gerenteId === 1) {
-      return mockClientes;
-    }
-
-    return [];
-  } catch (error) {
+    return response.data.clientes || [];
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error loading clientes:', error);
     return [];
   }
@@ -202,6 +282,7 @@ export const getClientesGerenteMock = async (gerenteId: number) => {
 
 /**
  * Obtiene pedidos filtrados por cliente (usuario_institucional)
+ * Endpoint: GET /api/v1/pedidos/?usuario_id={id} (pedidos-service)
  * 
  * @param clienteId ID del cliente (requerido para usuario_institucional)
  * @param filters Filtros opcionales
@@ -212,31 +293,51 @@ export const getPedidosByClienteMock = async (
   filters?: Omit<PedidosFilter, 'cliente_id'>
 ): Promise<PedidosListResponse> => {
   try {
-    const orders = await loadMockData<Pedido[]>('data/mock-orders.json');
+    // Para usuario_institucional, el backend filtra automáticamente por NIT desde los headers
+    // No es necesario enviar usuario_id como parámetro, el backend lo obtendrá del header
+    const response = await pedidosApi.get('/api/v1/pedidos/', {
+      params: {
+        // No enviar usuario_id, el backend filtrará automáticamente por NIT del header
+        estado: filters?.status,
+        pagina: filters?.page || 1,
+        por_pagina: filters?.limit || 25,
+      },
+    });
 
-    // Filtrar por cliente_id (OBLIGATORIO para usuario_institucional)
-    let filteredOrders = orders.filter((order) => order.cliente_id === clienteId);
-
-    // Aplicar filtros adicionales
-    if (filters?.status) {
-      filteredOrders = filteredOrders.filter((order) => order.status === filters.status);
-    }
-
-    // Paginación
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 25;
-    const start = (page - 1) * limit;
-    const end = start + limit;
-
-    const paginatedOrders = filteredOrders.slice(start, end);
+    const pedidos = response.data.pedidos || [];
+    
+    // Mapear al formato esperado por el frontend
+    const pedidosMapeados: Pedido[] = pedidos.map((p: any) => ({
+      id: p.pedido_id,
+      cliente_id: clienteId,
+      hospital: p.nit || 'N/A', // Usar NIT como identificador temporal
+      type: 'Hospital' as any,
+      status: p.estado as any,
+      refNumber: p.numero_pedido,
+      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      phone: '',
+      doctor: '',
+      amount: formatAmount(p.monto_total),
+      units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
+      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      deliveryDate: '',
+      items: (p.detalles || []).map((d: any) => ({
+        productoId: d.producto_id,
+        sku: `SKU-${d.producto_id.substring(0, 8)}`,
+        nombre: d.nombre_producto,
+        cantidad: d.cantidad_solicitada,
+        precio: d.precio_unitario,
+        subtotal: d.subtotal,
+      })),
+    }));
 
     return {
-      total: filteredOrders.length,
-      page,
-      limit,
-      pedidos: paginatedOrders,
+      total: response.data.total || 0,
+      page: response.data.pagina || 1,
+      limit: response.data.por_pagina || 25,
+      pedidos: pedidosMapeados,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error loading pedidos by cliente:', error);
     return {
       total: 0,
@@ -249,6 +350,7 @@ export const getPedidosByClienteMock = async (
 
 /**
  * Obtiene pedidos de todos los clientes de un gerente
+ * Endpoint: GET /api/v1/pedidos/ (pedidos-service filtra según rol)
  * 
  * @param gerenteId ID del gerente
  * @param filters Filtros opcionales
@@ -259,40 +361,50 @@ export const getPedidosByGerenteMock = async (
   filters?: Omit<PedidosFilter, 'gerente_id'>
 ): Promise<PedidosListResponse> => {
   try {
-    const orders = await loadMockData<Pedido[]>('data/mock-orders.json');
-
-    // Obtener clientes del gerente
-    const clientes = await getClientesGerenteMock(gerenteId);
-    const clienteIds = clientes.map((c) => c.cliente_id);
-
-    // Filtrar pedidos de los clientes del gerente
-    let filteredOrders = orders.filter((order) => {
-      return (
-        clienteIds.includes(order.cliente_id) &&
-        order.gerente_id === gerenteId
-      );
+    const response = await pedidosApi.get('/api/v1/pedidos/', {
+      params: {
+        usuario_id: gerenteId,
+        estado: filters?.status,
+        pagina: filters?.page || 1,
+        por_pagina: filters?.limit || 25,
+      },
     });
 
-    // Aplicar filtros adicionales
-    if (filters?.status) {
-      filteredOrders = filteredOrders.filter((order) => order.status === filters.status);
-    }
-
-    // Paginación
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 25;
-    const start = (page - 1) * limit;
-    const end = start + limit;
-
-    const paginatedOrders = filteredOrders.slice(start, end);
+    const pedidos = response.data.pedidos || [];
+    
+    // Mapear al formato esperado por el frontend
+    const pedidosMapeados: Pedido[] = pedidos.map((p: any) => ({
+      id: p.pedido_id,
+      cliente_id: 0, // El backend no retorna cliente_id directamente
+      hospital: p.nit || 'N/A',
+      type: 'Hospital' as any,
+      status: p.estado as any,
+      refNumber: p.numero_pedido,
+      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      phone: '',
+      doctor: '',
+      amount: formatAmount(p.monto_total),
+      units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
+      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      deliveryDate: '',
+      gerente_id: gerenteId,
+      items: (p.detalles || []).map((d: any) => ({
+        productoId: d.producto_id,
+        sku: `SKU-${d.producto_id.substring(0, 8)}`,
+        nombre: d.nombre_producto,
+        cantidad: d.cantidad_solicitada,
+        precio: d.precio_unitario,
+        subtotal: d.subtotal,
+      })),
+    }));
 
     return {
-      total: filteredOrders.length,
-      page,
-      limit,
-      pedidos: paginatedOrders,
+      total: response.data.total || 0,
+      page: response.data.pagina || 1,
+      limit: response.data.por_pagina || 25,
+      pedidos: pedidosMapeados,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error loading pedidos by gerente:', error);
     return {
       total: 0,
@@ -305,6 +417,7 @@ export const getPedidosByGerenteMock = async (
 
 /**
  * Crea un nuevo pedido
+ * Endpoint: POST /api/v1/pedidos/ (pedidos-service)
  * 
  * @param request Datos del pedido a crear
  * @returns Pedido creado con número único
@@ -313,58 +426,82 @@ export const createOrderMock = async (
   request: PedidoCreateRequest
 ): Promise<PedidoCreateResponse> => {
   try {
-    // Validaciones
-    if (!request.cliente_id) {
+    // Obtener NIT del cliente (necesario para el backend)
+    // TODO: Obtener el NIT del cliente desde el cliente-service
+    const clientes = await getClientesGerenteMock(request.gerente_id || 1);
+    const cliente = clientes.find((c: any) => c.cliente_id === request.cliente_id);
+
+    if (!cliente && !request.cliente_id) {
       throw new Error('cliente_id es requerido');
     }
 
-    if (!validatePedidoItems(request.items)) {
-      throw new Error('El pedido debe tener al menos un producto con cantidad > 0');
-    }
+    // Obtener usuario actual para headers
+    const token = await SecureStorageAdapter.getItem('token');
+    const userData = await SecureStorageAdapter.getItem('user');
+    
+    let usuarioId = 1;
+    let rolUsuario = 'usuario_institucional';
+    let nit = '900123456'; // Fallback
 
-    // Validar stock de todos los items
-    for (const item of request.items) {
-      const stockCheck = await checkStockMock(item.sku, item.cantidad);
-      if (!stockCheck.valid) {
-        throw new Error(
-          stockCheck.message || `Stock insuficiente para ${item.sku}`
-        );
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        usuarioId = parseInt(user.id) || usuarioId;
+        
+        if (user.roles?.includes('gerente_cuenta')) {
+          rolUsuario = 'gerente_cuenta';
+          // Para gerente_cuenta, el NIT es del cliente seleccionado
+          nit = cliente?.nit || nit;
+        } else if (user.roles?.includes('usuario_institucional')) {
+          rolUsuario = 'usuario_institucional';
+          // Para usuario_institucional, el NIT viene del usuario mismo
+          nit = user.nit || nit;
+        }
+      } catch (e) {
+        // Ignorar
       }
     }
 
-    // Obtener información del cliente
-    const clientes = await getClientesGerenteMock(request.gerente_id || 1);
-    const cliente = clientes.find((c) => c.cliente_id === request.cliente_id);
-
-    if (!cliente) {
-      throw new Error('Cliente no encontrado');
-    }
-
-    // Calcular totales
-    const total = calculatePedidoTotal(request.items);
-
-    // Generar número único
-    const refNumber = generateRefNumber();
-
-    // Crear pedido
-    const now = new Date();
-    const deliveryDate = new Date(now);
-    deliveryDate.setDate(deliveryDate.getDate() + 3); // Entrega en 3 días
-
-    const newPedido: PedidoCreateResponse = {
-      id: `ped-${Date.now()}`,
-      refNumber,
-      status: 'pendiente',
-      cliente_id: request.cliente_id,
-      items: request.items.map((item) => ({
-        ...item,
-        subtotal: item.cantidad * item.precio,
+    // Convertir formato frontend a formato backend
+    const requestBackend: PedidoCreateRequestBackend = {
+      nit: nit,
+      productos: request.items.map(item => ({
+        producto_id: item.productoId,
+        cantidad_solicitada: item.cantidad,
       })),
-      total,
-      createdAt: now.toISOString(),
+      observaciones: request.observaciones,
     };
 
-    // En producción, aquí se guardaría en la base de datos
+    const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, {
+      headers: {
+        'usuario-id': String(usuarioId),
+        'rol-usuario': rolUsuario,
+      },
+    });
+
+    const pedidoData = response.data.pedido || response.data;
+
+    // Mapear respuesta del backend al formato frontend
+    const total = pedidoData.monto_total || 0;
+    const items: PedidoItem[] = (pedidoData.detalles || []).map((d: any) => ({
+      productoId: d.producto_id,
+      sku: `SKU-${d.producto_id.substring(0, 8)}`,
+      nombre: d.nombre_producto,
+      cantidad: d.cantidad_solicitada,
+      precio: d.precio_unitario,
+      subtotal: d.subtotal,
+    }));
+
+    const newPedido: PedidoCreateResponse = {
+      id: pedidoData.pedido_id || pedidoData.id,
+      refNumber: pedidoData.numero_pedido || `PED-${Date.now()}`,
+      status: pedidoData.estado || 'pendiente',
+      cliente_id: request.cliente_id,
+      items: items,
+      total: total,
+      createdAt: pedidoData.fecha_creacion || new Date().toISOString(),
+    };
+
     console.log('✅ [PedidosAPI] Order created:', {
       id: newPedido.id,
       refNumber: newPedido.refNumber,
@@ -373,8 +510,19 @@ export const createOrderMock = async (
     });
 
     return newPedido;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ [PedidosAPI] Error creating order:', error);
+    
+    if (error.response?.data?.detail) {
+      const detail = error.response.data.detail;
+      if (typeof detail === 'string') {
+        throw new Error(detail);
+      }
+      if (detail.error === 'INVENTARIO_INSUFICIENTE') {
+        throw new Error(detail.mensaje || 'Inventario insuficiente para uno o más productos');
+      }
+    }
+    
     throw error;
   }
 };
@@ -384,4 +532,3 @@ export const createOrderMock = async (
 // ========================================
 
 export type { Product };
-

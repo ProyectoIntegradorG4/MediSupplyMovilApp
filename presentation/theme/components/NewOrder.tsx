@@ -18,7 +18,7 @@ import ProductSelectionModal from './ProductSelectionModal';
 import ShoppingCart from './ShoppingCart';
 import { Cliente } from '@/core/clientes/interface/cliente';
 import { PedidoItem, PedidoCreateRequest } from '@/core/pedidos/interface/pedido';
-import { getClientesGerenteMock, getProductsMock, createOrderMock, getProductBySkuMock, Product } from '@/core/pedidos/api/pedidosApi';
+import { getClientesGerenteMock, getProductsMock, createOrderMock, getProductBySkuMock, checkStockMock, Product } from '@/core/pedidos/api/pedidosApi';
 import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
 
 type OrderStep = 'cliente' | 'productos' | 'resumen' | 'confirmacion';
@@ -56,12 +56,20 @@ export default function NewOrderModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
-  // Cargar productos al abrir modal
+  // Cargar productos al abrir modal principal
   useEffect(() => {
     if (isOpen && products.length === 0) {
       loadProducts();
     }
   }, [isOpen]);
+
+  // Recargar productos cada vez que se abre el modal de selección de productos
+  // para obtener el stock actualizado
+  useEffect(() => {
+    if (isProductModalOpen) {
+      loadProducts();
+    }
+  }, [isProductModalOpen]);
 
   // Cargar clientes si es gerente
   useEffect(() => {
@@ -140,46 +148,129 @@ export default function NewOrderModal({
 
   // Manejar agregar producto al carrito
   const handleAddToCart = async (sku: string, cantidad: number) => {
-    const product = await getProductBySkuMock(sku);
+    try {
+      const product = await getProductBySkuMock(sku);
+      if (!product) {
+        Alert.alert('Error', 'Producto no encontrado');
+        return;
+      }
+
+      // Validar stock en tiempo real antes de agregar al carrito
+      const stockCheck = await checkStockMock(product.productoId, cantidad);
+      
+      if (!stockCheck.valid) {
+        Alert.alert('Stock Insuficiente', stockCheck.message || 'No hay suficiente stock disponible');
+        // Recargar productos para actualizar el stock mostrado
+        await loadProducts();
+        return;
+      }
+
+      // Calcular cantidad total que se solicitaría (incluyendo lo que ya está en el carrito)
+      const existingItem = cartItems.find((item) => item.sku === sku);
+      const cantidadTotalSolicitada = (existingItem?.cantidad || 0) + cantidad;
+
+      // Validar que la cantidad total no exceda el stock disponible
+      if (cantidadTotalSolicitada > stockCheck.available) {
+        Alert.alert(
+          'Stock Insuficiente',
+          `Stock insuficiente. Disponible: ${stockCheck.available} unidades. Ya tienes ${existingItem?.cantidad || 0} en el carrito.`
+        );
+        // Recargar productos para actualizar el stock mostrado
+        await loadProducts();
+        return;
+      }
+
+      // Verificar si ya está en el carrito
+      const existingIndex = cartItems.findIndex((item) => item.sku === sku);
+
+      if (existingIndex >= 0) {
+        // Actualizar cantidad
+        const newItems = [...cartItems];
+        newItems[existingIndex].cantidad += cantidad;
+        setCartItems(newItems);
+      } else {
+        // Agregar nuevo item
+        const newItem: PedidoItem = {
+          productoId: product.productoId,
+          sku: product.sku,
+          nombre: product.nombre,
+          cantidad,
+          precio: product.precio,
+        };
+        setCartItems([...cartItems, newItem]);
+      }
+
+      // Actualizar el stock en el estado local de productos para reflejar el cambio
+      setProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p.sku === sku
+            ? { ...p, stock: stockCheck.available - cantidadTotalSolicitada }
+            : p
+        )
+      );
+
+      Alert.alert('Éxito', 'Producto agregado al carrito');
+    } catch (error) {
+      console.error('Error agregando producto al carrito:', error);
+      Alert.alert('Error', 'No se pudo agregar el producto al carrito');
+    }
+  };
+
+  // Manejar actualizar cantidad en carrito
+  const handleUpdateQuantity = async (sku: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveItem(sku);
+      return;
+    }
+
+    // Buscar el producto para obtener su ID
+    const product = products.find((p) => p.sku === sku);
     if (!product) {
       Alert.alert('Error', 'Producto no encontrado');
       return;
     }
 
-    // Verificar si ya está en el carrito
-    const existingIndex = cartItems.findIndex((item) => item.sku === sku);
-
-    if (existingIndex >= 0) {
-      // Actualizar cantidad
-      const newItems = [...cartItems];
-      newItems[existingIndex].cantidad += cantidad;
-      setCartItems(newItems);
-    } else {
-      // Agregar nuevo item
-      const newItem: PedidoItem = {
-        productoId: product.productoId,
-        sku: product.sku,
-        nombre: product.nombre,
-        cantidad,
-        precio: product.precio,
-      };
-      setCartItems([...cartItems, newItem]);
+    // Validar stock en tiempo real antes de actualizar
+    const stockCheck = await checkStockMock(product.productoId, newQuantity);
+    
+    if (!stockCheck.valid || newQuantity > stockCheck.available) {
+      Alert.alert(
+        'Stock Insuficiente',
+        stockCheck.message || `Stock insuficiente. Disponible: ${stockCheck.available} unidades`
+      );
+      // Recargar productos para actualizar el stock mostrado
+      await loadProducts();
+      return;
     }
 
-    Alert.alert('Éxito', 'Producto agregado al carrito');
-  };
-
-  // Manejar actualizar cantidad en carrito
-  const handleUpdateQuantity = (sku: string, newQuantity: number) => {
     const newItems = cartItems.map((item) =>
       item.sku === sku ? { ...item, cantidad: newQuantity } : item
     );
     setCartItems(newItems);
+
+    // Actualizar el stock en el estado local
+    setProducts((prevProducts) =>
+      prevProducts.map((p) =>
+        p.sku === sku
+          ? { ...p, stock: stockCheck.available - newQuantity }
+          : p
+      )
+    );
   };
 
   // Manejar remover del carrito
   const handleRemoveItem = (sku: string) => {
     setCartItems(cartItems.filter((item) => item.sku !== sku));
+    // Actualizar stock localmente cuando se remueve del carrito
+    setProducts((prevProducts) =>
+      prevProducts.map((p) => {
+        const removedItem = cartItems.find((item) => item.sku === sku);
+        if (p.sku === sku && removedItem) {
+          return { ...p, stock: (p.stock || 0) + removedItem.cantidad };
+        }
+        return p;
+      })
+    );
   };
 
   // Manejar navegación de pasos
@@ -231,6 +322,9 @@ export default function NewOrderModal({
       };
 
       const response = await createOrderMock(orderRequest);
+
+      // Recargar productos para actualizar el stock después de crear el pedido
+      await loadProducts();
 
       Alert.alert(
         'Pedido Creado',
@@ -371,17 +465,27 @@ export default function NewOrderModal({
           </View>
 
           {/* Content */}
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {currentStep === 'cliente' && (
+          {currentStep === 'cliente' ? (
+            <View style={styles.content}>
               <ClienteSelector
                 clientes={clientes}
                 selectedClienteId={selectedCliente?.cliente_id}
                 onSelectCliente={handleSelectCliente}
                 isLoading={isLoadingClientes}
               />
-            )}
-
-            {currentStep === 'productos' && (
+            </View>
+          ) : currentStep === 'resumen' ? (
+            <View style={styles.content}>
+              <ShoppingCart
+                items={cartItems}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemoveItem={handleRemoveItem}
+                productStockMap={productStockMap}
+              />
+            </View>
+          ) : (
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+              {currentStep === 'productos' && (
               <View style={styles.productStepContainer}>
                 {isLoadingProducts ? (
                   <View style={styles.loadingContainer}>
@@ -420,15 +524,6 @@ export default function NewOrderModal({
               </View>
             )}
 
-            {currentStep === 'resumen' && (
-              <ShoppingCart
-                items={cartItems}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemoveItem={handleRemoveItem}
-                productStockMap={productStockMap}
-              />
-            )}
-
             {currentStep === 'confirmacion' && (
               <View style={styles.confirmationContainer}>
                 <ActivityIndicator size="large" color={primaryColor} />
@@ -437,7 +532,8 @@ export default function NewOrderModal({
                 </Text>
               </View>
             )}
-          </ScrollView>
+            </ScrollView>
+          )}
 
           {/* Footer Navigation */}
           {currentStep !== 'confirmacion' && (
@@ -491,13 +587,17 @@ export default function NewOrderModal({
           )}
 
           {/* Product Selection Modal */}
-          <ProductSelectionModal
-            isOpen={isProductModalOpen}
-            onClose={() => setIsProductModalOpen(false)}
-            onAddToCart={handleAddToCart}
-            products={products}
-            isLoading={isLoadingProducts}
-          />
+            <ProductSelectionModal
+              isOpen={isProductModalOpen}
+              onClose={() => {
+                setIsProductModalOpen(false);
+                // Recargar productos al cerrar el modal para actualizar stock
+                loadProducts();
+              }}
+              onAddToCart={handleAddToCart}
+              products={products}
+              isLoading={isLoadingProducts}
+            />
         </View>
       </View>
     </Modal>

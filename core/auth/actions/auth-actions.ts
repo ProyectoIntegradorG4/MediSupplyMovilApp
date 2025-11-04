@@ -18,6 +18,7 @@ export interface AuthResponse {
   isActive: boolean;
   roles: string[];
   token: string;
+  nit?: string;
 }
 
 /**
@@ -31,6 +32,7 @@ const returnUserToken = (
     isActive: boolean;
     roles: string[];
     token: string;
+    nit?: string;
   }
 ): {
   user: User;
@@ -42,6 +44,7 @@ const returnUserToken = (
     fullName: data.fullName,
     isActive: data.isActive,
     roles: data.roles,
+    nit: data.nit, // Incluir NIT del usuario
   };
 
   return {

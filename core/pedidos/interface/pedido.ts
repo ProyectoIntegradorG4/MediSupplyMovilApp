@@ -69,7 +69,19 @@ export interface Pedido {
 }
 
 /**
- * Request para crear un nuevo pedido
+ * Request para crear un nuevo pedido (formato backend)
+ */
+export interface PedidoCreateRequestBackend {
+  nit: string; // NIT del cliente (o del usuario si es institucional)
+  productos: Array<{
+    producto_id: string; // UUID del producto
+    cantidad_solicitada: number; // Cantidad > 0
+  }>;
+  observaciones?: string;
+}
+
+/**
+ * Request para crear un nuevo pedido (formato frontend)
  */
 export interface PedidoCreateRequest {
   cliente_id: number; // REQUERIDO (automático para usuario_institucional)

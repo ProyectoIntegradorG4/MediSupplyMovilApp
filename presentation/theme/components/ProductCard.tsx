@@ -1,3 +1,4 @@
+import { Fonts } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
     View,
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
-import { Fonts } from '@/constants/theme';
 
 interface ProductCardProps {
     name: string;
@@ -86,7 +86,7 @@ export default function ProductCard({
         // Limitar a stock disponible
         const limitedValue = Math.max(0, Math.min(stock, value));
         setQuantity(limitedValue);
-        
+
         // Mostrar alerta si intenta exceder stock
         if (value > stock && onStockValidationError) {
             onStockValidationError(`Stock insuficiente. Disponible: ${stock} unidades`);
@@ -95,7 +95,7 @@ export default function ProductCard({
 
     const handleAddToOrder = () => {
         if (quantity === 0) return;
-        
+
         // Validación de stock antes de agregar
         if (quantity > stock) {
             if (onStockValidationError) {
@@ -125,8 +125,8 @@ export default function ProductCard({
         <View
             style={[
                 styles.card,
-                { 
-                    backgroundColor: primaryColor + '0D', 
+                {
+                    backgroundColor: primaryColor + '0D',
                     borderColor: cardBorderColor,
                 },
             ]}
@@ -215,8 +215,8 @@ export default function ProductCard({
                                 backgroundColor: isAdded
                                     ? stockAvailable
                                     : stock === 0
-                                    ? stockUnavailable
-                                    : buttonColors[stockStatus],
+                                        ? stockUnavailable
+                                        : buttonColors[stockStatus],
                                 opacity: pressed ? 0.7 : quantity === 0 || stock === 0 ? 0.5 : 1,
                             },
                         ]}
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         borderWidth: 1,
         textAlign: 'center',
-        fontSize: 30,
+        fontSize: 20,
         fontWeight: 'bold',
     },
     addButton: {
