@@ -72,7 +72,8 @@ export const authLogin = async (email: string, password: string) => {
       id: data.id,
       email: data.email,
       fullName: data.fullName,
-      roles: data.roles
+      roles: data.roles,
+      nit: data.nit
     });
 
     return returnUserToken(data);
@@ -110,14 +111,42 @@ export const authCheckStatus = async () => {
       roles: data.roles
     });
 
-    // Reconstruir el objeto User con la información del token
-    const user: User = {
-      id: data.user_id.toString(),
-      email: data.email,
-      fullName: '', // No disponible en verify-token
-      isActive: true,
-      roles: data.roles,
-    };
+    // Intentar obtener el usuario completo del storage
+    const userDataString = await SecureStorageAdapter.getItem('user');
+    let user: User;
+
+    if (userDataString) {
+      try {
+        // Si hay usuario guardado, usarlo (contiene fullName y nit)
+        user = JSON.parse(userDataString);
+        console.log('✅ Usuario recuperado del storage:', {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          nit: user.nit
+        });
+      } catch (e) {
+        console.warn('⚠️ Error parseando usuario del storage, reconstruyendo...');
+        // Si falla el parse, reconstruir básico
+        user = {
+          id: data.user_id.toString(),
+          email: data.email,
+          fullName: '',
+          isActive: true,
+          roles: data.roles,
+        };
+      }
+    } else {
+      // Si no hay usuario guardado, reconstruir básico
+      console.warn('⚠️ No hay usuario en storage, reconstruyendo básico');
+      user = {
+        id: data.user_id.toString(),
+        email: data.email,
+        fullName: '',
+        isActive: true,
+        roles: data.roles,
+      };
+    }
 
     return {
       user,

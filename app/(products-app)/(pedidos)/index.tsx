@@ -9,6 +9,8 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
@@ -17,6 +19,7 @@ import NewOrderModal from '@/presentation/theme/components/NewOrder';
 import {
   getPedidosByClienteMock,
   getPedidosByGerenteMock,
+  getClientesGerenteMock,
 } from '@/core/pedidos/api/pedidosApi';
 import { Pedido } from '@/core/pedidos/interface/pedido';
 
@@ -33,7 +36,26 @@ const PedidosScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Para gerente_cuenta: filtro de clientes
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [selectedClienteNit, setSelectedClienteNit] = useState<string>('');
+  const [showClientePicker, setShowClientePicker] = useState(false);
 
+  // Cargar clientes del gerente
+  const loadClientes = useCallback(async () => {
+    if (!isGerenteCuenta) return;
+    
+    try {
+      const gerenteId = parseInt(user?.id || '1');
+      const clientesList = await getClientesGerenteMock(gerenteId);
+      setClientes(clientesList);
+      console.log(`✅ [PedidosScreen] Loaded ${clientesList.length} clientes for gerente ${gerenteId}`);
+    } catch (error) {
+      console.error('❌ [PedidosScreen] Error loading clientes:', error);
+    }
+  }, [user, isGerenteCuenta]);
+  
   // Cargar pedidos
   const loadPedidos = useCallback(async () => {
     try {
@@ -47,11 +69,12 @@ const PedidosScreen = () => {
           `✅ [PedidosScreen] Loaded ${response.pedidos.length} pedidos for cliente ${clienteId}`
         );
       } else if (isGerenteCuenta) {
-        // Gerente: pedidos de todos sus clientes
+        // Gerente: pedidos de todos sus clientes o filtrados por NIT
         const gerenteId = parseInt(user?.id || '1');
-        response = await getPedidosByGerenteMock(gerenteId);
+        const filters = selectedClienteNit ? { nit: selectedClienteNit } : {};
+        response = await getPedidosByGerenteMock(gerenteId, filters);
         console.log(
-          `✅ [PedidosScreen] Loaded ${response.pedidos.length} pedidos for gerente ${gerenteId}`
+          `✅ [PedidosScreen] Loaded ${response.pedidos.length} pedidos for gerente ${gerenteId}${selectedClienteNit ? ` (NIT: ${selectedClienteNit})` : ''}`
         );
       } else {
         // Sin rol específico
@@ -66,9 +89,16 @@ const PedidosScreen = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, isGerenteCuenta, isUsuarioInstitucional]);
+  }, [user, isGerenteCuenta, isUsuarioInstitucional, selectedClienteNit]);
 
-  // Cargar al montar
+  // Cargar clientes al montar (solo gerente)
+  useEffect(() => {
+    if (isGerenteCuenta) {
+      loadClientes();
+    }
+  }, [isGerenteCuenta, loadClientes]);
+  
+  // Cargar pedidos al montar o cuando cambie el filtro
   useEffect(() => {
     loadPedidos();
   }, [loadPedidos]);
@@ -108,7 +138,7 @@ const PedidosScreen = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={{ flex: 1 }}>
           <ThemedText style={styles.title}>Mis Pedidos</ThemedText>
           <ThemedText style={styles.subtitle}>
             {user?.fullName || user?.email}
@@ -128,6 +158,67 @@ const PedidosScreen = () => {
           <ThemedText style={styles.newOrderText}>Nuevo</ThemedText>
         </Pressable>
       </View>
+      
+      {/* Filtro de clientes para gerente_cuenta */}
+      {isGerenteCuenta && clientes.length > 0 && (
+        <View style={styles.filterContainer}>
+          <ThemedText style={styles.filterLabel}>Filtrar por cliente:</ThemedText>
+          <TouchableOpacity
+            style={[styles.pickerButton, { borderColor: primaryColor }]}
+            onPress={() => setShowClientePicker(!showClientePicker)}
+          >
+            <ThemedText style={styles.pickerButtonText}>
+              {selectedClienteNit 
+                ? clientes.find(c => c.nit === selectedClienteNit)?.nombre_comercial || 'Seleccionar cliente'
+                : 'Todos los clientes'}
+            </ThemedText>
+            <Ionicons 
+              name={showClientePicker ? 'chevron-up' : 'chevron-down'} 
+              size={20} 
+              color={textColor} 
+            />
+          </TouchableOpacity>
+          
+          {showClientePicker && (
+            <View style={styles.pickerDropdown}>
+              <ScrollView style={styles.pickerScroll}>
+                <TouchableOpacity
+                  style={[
+                    styles.pickerItem,
+                    selectedClienteNit === '' && { backgroundColor: primaryColor + '20' }
+                  ]}
+                  onPress={() => {
+                    setSelectedClienteNit('');
+                    setShowClientePicker(false);
+                  }}
+                >
+                  <ThemedText style={styles.pickerItemText}>Todos los clientes</ThemedText>
+                </TouchableOpacity>
+                {clientes.map((cliente) => (
+                  <TouchableOpacity
+                    key={cliente.cliente_id}
+                    style={[
+                      styles.pickerItem,
+                      selectedClienteNit === cliente.nit && { backgroundColor: primaryColor + '20' }
+                    ]}
+                    onPress={() => {
+                      setSelectedClienteNit(cliente.nit);
+                      setShowClientePicker(false);
+                    }}
+                  >
+                    <ThemedText style={styles.pickerItemText}>
+                      {cliente.nombre_comercial}
+                    </ThemedText>
+                    <ThemedText style={styles.pickerItemSubtext}>
+                      NIT: {cliente.nit}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      )}
 
       {/* Lista de Pedidos */}
       {pedidos.length === 0 ? (
@@ -277,6 +368,58 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  pickerButton: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pickerButtonText: {
+    fontSize: 16,
+  },
+  pickerDropdown: {
+    backgroundColor: 'white',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d0d0d0',
+    marginTop: 8,
+    maxHeight: 200,
+    overflow: 'hidden',
+  },
+  pickerScroll: {
+    maxHeight: 200,
+  },
+  pickerItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  pickerItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  pickerItemSubtext: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 4,
   },
 });
 

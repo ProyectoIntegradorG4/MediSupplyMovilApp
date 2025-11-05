@@ -37,6 +37,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       console.log('❌ [Store] Token o user faltante, estableciendo unauthenticated');
       set({ status: 'unauthenticated', token: undefined, user: undefined });
       await SecureStorageAdapter.deleteItem('token');
+      await SecureStorageAdapter.deleteItem('user');
       return false;
     }
 
@@ -53,7 +54,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     });
 
     await SecureStorageAdapter.setItem('token', token);
-    console.log('💾 [Store] Token guardado en storage');
+    await SecureStorageAdapter.setItem('user', JSON.stringify(user));
+    console.log('💾 [Store] Token y usuario guardados en storage');
 
     return true;
   },
@@ -86,7 +88,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   logout: async () => {
-    SecureStorageAdapter.deleteItem('token');
+    await SecureStorageAdapter.deleteItem('token');
+    await SecureStorageAdapter.deleteItem('user');
 
     set({ status: 'unauthenticated', token: undefined, user: undefined });
   },

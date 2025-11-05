@@ -76,10 +76,15 @@ pedidosApi.interceptors.request.use(async (config) => {
       // Agregar NIT del usuario si está disponible (necesario para usuario_institucional)
       if (user.nit && !config.headers['nit-usuario']) {
         config.headers['nit-usuario'] = user.nit;
+        console.log(`📋 [PEDIDOS API] NIT usuario agregado al header: ${user.nit}`);
+      } else if (!user.nit) {
+        console.warn('⚠️ [PEDIDOS API] Usuario sin NIT en storage:', user);
       }
     } catch (e) {
-      // Ignorar si no se puede parsear
+      console.error('❌ [PEDIDOS API] Error parseando userData:', e);
     }
+  } else {
+    console.warn('⚠️ [PEDIDOS API] No se encontró userData en storage');
   }
 
   return config;
@@ -94,6 +99,7 @@ if (CONFIG.DEBUG) {
     if (config.headers['usuario-id']) {
       console.log(`   usuario-id: ${config.headers['usuario-id']}`);
       console.log(`   rol-usuario: ${config.headers['rol-usuario']}`);
+      console.log(`   nit-usuario: ${config.headers['nit-usuario'] || 'NO ENVIADO'}`);
     }
     return config;
   });
@@ -353,7 +359,7 @@ export const getPedidosByClienteMock = async (
  * Endpoint: GET /api/v1/pedidos/ (pedidos-service filtra según rol)
  * 
  * @param gerenteId ID del gerente
- * @param filters Filtros opcionales
+ * @param filters Filtros opcionales (incluye NIT para filtrar por cliente específico)
  * @returns Lista paginada de pedidos de los clientes del gerente
  */
 export const getPedidosByGerenteMock = async (
@@ -364,6 +370,7 @@ export const getPedidosByGerenteMock = async (
     const response = await pedidosApi.get('/api/v1/pedidos/', {
       params: {
         usuario_id: gerenteId,
+        nit: filters?.nit, // Filtrar por NIT específico si se proporciona
         estado: filters?.status,
         pagina: filters?.page || 1,
         por_pagina: filters?.limit || 25,

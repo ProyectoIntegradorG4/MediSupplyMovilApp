@@ -109,6 +109,7 @@ export interface PedidoCreateResponse {
 export interface PedidosFilter {
   cliente_id?: number; // Para usuario_institucional (obligatorio)
   gerente_id?: number; // Para gerente_cuenta (obligatorio)
+  nit?: string; // Filtrar por NIT específico (opcional para gerente_cuenta)
   status?: PedidoStatus;
   fechaDesde?: string;
   fechaHasta?: string;
