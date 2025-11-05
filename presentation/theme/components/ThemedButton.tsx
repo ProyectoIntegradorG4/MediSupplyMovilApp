@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, PressableProps, StyleSheet, Text } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { Fonts, BorderRadius, Spacing } from '@/constants/theme';
 
 interface Props extends PressableProps {
   children: string;
@@ -10,6 +11,7 @@ interface Props extends PressableProps {
 
 const ThemedButton = ({ children, icon, ...rest }: Props) => {
   const primaryColor = useThemeColor({}, 'primary');
+  const textOnPrimary = useThemeColor({}, 'textOnPrimary');
 
   return (
     <Pressable
@@ -21,15 +23,15 @@ const ThemedButton = ({ children, icon, ...rest }: Props) => {
       ]}
       {...rest}
     >
-      <Text style={{ color: 'white' }}>{children}</Text>
+      <Text style={[styles.buttonText, { color: textOnPrimary }]}>{children}</Text>
 
       {icon && (
         <Ionicons
           testID="button-icon"
           name={icon}
           size={24}
-          color="white"
-          style={{ marginHorizontal: 5 }}
+          color={textOnPrimary}
+          style={{ marginHorizontal: Spacing.sm }}
         />
       )}
     </Pressable>
@@ -39,11 +41,15 @@ export default ThemedButton;
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-    borderRadius: 5,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+  },
+  buttonText: {
+    fontFamily: Fonts.regular,
+    fontSize: 16,
   },
 });

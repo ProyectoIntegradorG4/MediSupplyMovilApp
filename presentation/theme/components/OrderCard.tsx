@@ -1,259 +1,233 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import StatusBadge from './StatusBadge';
 
-interface OrderCardProps {
-    hospitalName: string;
-    category: string;
-    status: 'pending' | 'sent' | 'delivered' | 'cancelled';
-    refNumber: string;
-    time: string;
-    phone: string;
-    doctor: string;
-    price: string;
-    units: string;
-    creationDate: string;
-    deliveryDate: string;
+type OrderStatus = 'pendiente' | 'enviado' | 'entregado' | 'cancelado';
+
+interface Order {
+  id: string;
+  hospital: string;
+  type: string;
+  status: OrderStatus;
+  refNumber: string;
+  time: string;
+  phone: string;
+  doctor: string;
+  amount: string;
+  units: string;
+  creationDate: string;
+  deliveryDate: string;
 }
 
-const statusConfig = {
-    pending: {
-        label: 'Pendiente',
-        textColor: '#F59E0B',
-        bgColor: '#FEF3C7',
-        borderColor: '#FCD34D',
-    },
-    sent: {
-        label: 'Enviado',
-        textColor: '#3B82F6',
-        bgColor: '#DBEAFE',
-        borderColor: '#93C5FD',
-    },
-    delivered: {
-        label: 'Entregado',
-        textColor: '#10B981',
-        bgColor: '#D1FAE5',
-        borderColor: '#6EE7B7',
-    },
-    cancelled: {
-        label: 'Cancelado',
-        textColor: '#EF4444',
-        bgColor: '#FEE2E2',
-        borderColor: '#FCA5A5',
-    },
-};
+interface OrderCardProps {
+  order: Order;
+  onPress?: () => void;
+}
 
-export function OrderCard({
-    hospitalName,
-    category,
-    status,
-    refNumber,
-    time,
-    phone,
-    doctor,
-    price,
-    units,
-    creationDate,
-    deliveryDate,
-}: OrderCardProps) {
-    const primaryColor = useThemeColor({}, 'primary');
-    const textColor = useThemeColor({}, 'text');
-    const statusStyle = statusConfig[status];
+export default function OrderCard({ order, onPress }: OrderCardProps) {
+  const primaryColor = useThemeColor({}, 'primary');
+  const textColor = useThemeColor({}, 'text');
+  const backgroundColor = useThemeColor({}, 'background');
 
-    return (
-        <View style={[styles.card, { backgroundColor: primaryColor + '0D' }]}>
-            {/* Header con nombre del hospital y badges */}
-            <View style={styles.header}>
-                <Text style={[styles.hospitalName, { color: textColor }]} numberOfLines={2}>
-                    {hospitalName}
-                </Text>
-
-                <View style={styles.badgesContainer}>
-                    <View style={[styles.categoryBadge, { borderColor: '#ccc' }]}>
-                        <Text style={[styles.categoryText, { color: primaryColor }]}>
-                            {category}
-                        </Text>
-                    </View>
-
-                    <View
-                        style={[
-                            styles.statusBadge,
-                            {
-                                backgroundColor: statusStyle.bgColor,
-                                borderColor: statusStyle.borderColor,
-                            },
-                        ]}
-                    >
-                        <Text
-                            style={[styles.statusText, { color: statusStyle.textColor }]}
-                        >
-                            {statusStyle.label}
-                        </Text>
-                    </View>
-                </View>
-            </View>
-
-            {/* Información del pedido */}
-            <View style={styles.infoSection}>
-                {/* Referencia */}
-                <View style={styles.infoRow}>
-                    <Ionicons name="document-text" size={20} color={textColor} />
-                    <Text style={[styles.infoTextBold, { color: textColor }]}>
-                        {refNumber}
-                    </Text>
-                </View>
-
-                {/* Hora y Fecha de creación */}
-                <View style={styles.infoRow}>
-                    <View style={styles.infoRowLeft}>
-                        <Ionicons name="time" size={20} color={textColor} />
-                        <Text style={[styles.infoText, { color: textColor }]}>{time}</Text>
-                    </View>
-                    <View style={styles.infoRowRight}>
-                        <Ionicons name="calendar" size={20} color={textColor} />
-                        <Text style={[styles.infoText, { color: textColor }]}>
-                            {creationDate}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Teléfono y Fecha de entrega */}
-                <View style={styles.infoRow}>
-                    <View style={styles.infoRowLeft}>
-                        <Ionicons name="call" size={20} color={textColor} />
-                        <Text style={[styles.infoText, { color: textColor }]}>{phone}</Text>
-                    </View>
-                    <View style={styles.infoRowRight}>
-                        <Ionicons name="time" size={20} color={textColor} />
-                        <Text style={[styles.infoText, { color: textColor }]}>
-                            {deliveryDate}
-                        </Text>
-                    </View>
-                </View>
-
-                {/* Doctor */}
-                <View style={styles.infoRow}>
-                    <Ionicons name="person" size={20} color={textColor} />
-                    <Text style={[styles.infoText, { color: textColor }]}>{doctor}</Text>
-                </View>
-            </View>
-
-            {/* Separador */}
-            <View style={[styles.separator, { backgroundColor: textColor + '40' }]} />
-
-            {/* Footer con precio y unidades */}
-            <View style={styles.footer}>
-                <View style={styles.footerItem}>
-                    <Ionicons name="cash" size={20} color={textColor} />
-                    <Text style={[styles.footerTextBold, { color: textColor }]}>
-                        {price}
-                    </Text>
-                </View>
-
-                <View style={styles.footerItem}>
-                    <Ionicons name="cube" size={20} color={textColor} />
-                    <Text style={[styles.footerTextBold, { color: textColor }]}>
-                        {units}
-                    </Text>
-                </View>
-            </View>
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: primaryColor + '0D', opacity: pressed ? 0.8 : 1 },
+      ]}
+    >
+      {/* Header Section */}
+      <View style={styles.header}>
+        <Text style={[styles.hospitalName, { color: textColor }]} numberOfLines={2}>
+          {order.hospital}
+        </Text>
+        <View style={styles.badges}>
+          <View style={[styles.typeBadge, { backgroundColor, borderColor: '#D9D9D9' }]}>
+            <Text style={[styles.typeText, { color: primaryColor }]}>
+              {order.type}
+            </Text>
+          </View>
+          <StatusBadge status={order.status} />
         </View>
-    );
+      </View>
+
+      {/* Main Content */}
+      <View style={styles.mainContent}>
+        {/* Left Column */}
+        <View style={styles.leftColumn}>
+          <View style={styles.infoRow}>
+            <Ionicons name="barcode-outline" size={20} color={textColor} style={styles.icon} />
+            <Text style={[styles.refNumber, { color: textColor }]} numberOfLines={1}>
+              {order.refNumber}
+            </Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="time-outline" size={20} color={textColor} style={styles.icon} />
+            <Text style={[styles.infoText, { color: textColor }]}>{order.time}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="call-outline" size={20} color={textColor} style={styles.icon} />
+            <Text style={[styles.infoText, { color: textColor }]}>{order.phone}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="person-outline" size={20} color={textColor} style={styles.icon} />
+            <Text style={[styles.infoText, { color: textColor }]} numberOfLines={1}>
+              {order.doctor}
+            </Text>
+          </View>
+        </View>
+
+        {/* Right Column */}
+        <View style={styles.rightColumn}>
+          <View style={styles.dateSection}>
+            <Ionicons name="calendar-outline" size={20} color={textColor} style={styles.icon} />
+            <View style={styles.dateContent}>
+              <Text style={[styles.dateLabel, { color: textColor }]}>Fecha Creación</Text>
+              <Text style={[styles.dateValue, { color: textColor }]}>{order.creationDate}</Text>
+            </View>
+          </View>
+
+          <View style={styles.dateSection}>
+            <Ionicons name="timer-outline" size={20} color={textColor} style={styles.icon} />
+            <View style={styles.dateContent}>
+              <Text style={[styles.dateLabel, { color: textColor }]}>Fecha Entrega</Text>
+              <Text style={[styles.dateValue, { color: textColor }]}>{order.deliveryDate}</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View style={[styles.divider, { borderColor: textColor }]} />
+
+      {/* Footer Section */}
+      <View style={styles.footer}>
+        <View style={styles.footerItem}>
+          <Ionicons name="cash-outline" size={20} color={textColor} style={styles.icon} />
+          <Text style={[styles.amountText, { color: textColor }]}>{order.amount}</Text>
+        </View>
+        <View style={styles.footerItem}>
+          <Ionicons name="clipboard-outline" size={20} color={textColor} style={styles.icon} />
+          <Text style={[styles.unitsText, { color: textColor }]}>{order.units}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        width: '100%',
-        borderRadius: 15,
-        padding: 10,
-        marginBottom: 12,
-    },
-    header: {
-        marginBottom: 8,
-    },
-    hospitalName: {
-        fontSize: 25,
-        fontWeight: '400',
-        lineHeight: 28,
-        marginBottom: 8,
-        paddingRight: 100,
-    },
-    badgesContainer: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        alignItems: 'flex-end',
-        gap: 8,
-    },
-    categoryBadge: {
-        paddingHorizontal: 32,
-        paddingVertical: 2,
-        borderRadius: 15,
-        borderWidth: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    categoryText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    statusBadge: {
-        paddingHorizontal: 20,
-        paddingVertical: 2,
-        borderRadius: 15,
-        borderWidth: 1,
-    },
-    statusText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        lineHeight: 22,
-    },
-    infoSection: {
-        marginTop: 8,
-        gap: 6,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    infoRowLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        flex: 1,
-    },
-    infoRowRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        flex: 1,
-    },
-    infoText: {
-        fontSize: 16,
-        lineHeight: 22,
-    },
-    infoTextBold: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    separator: {
-        height: 1,
-        width: '100%',
-        marginVertical: 6,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    footerItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    footerTextBold: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
+  card: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  hospitalName: {
+    fontSize: 25,
+    fontWeight: '400',
+    lineHeight: 28,
+    flex: 1,
+  },
+  badges: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  typeBadge: {
+    paddingHorizontal: 32,
+    paddingVertical: 2,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  typeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  mainContent: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  leftColumn: {
+    flex: 1,
+    gap: 6,
+  },
+  rightColumn: {
+    flex: 1,
+    gap: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+  },
+  refNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 22,
+    flex: 1,
+  },
+  infoText: {
+    fontSize: 16,
+    lineHeight: 20,
+    flex: 1,
+  },
+  dateSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  dateContent: {
+    flex: 1,
+  },
+  dateLabel: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  dateValue: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  divider: {
+    borderTopWidth: 1,
+    width: '100%',
+    marginVertical: 8,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  footerItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  amountText: {
+    fontSize: 18,
+    fontWeight: '900',
+    lineHeight: 22,
+  },
+  unitsText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
 });
