@@ -1,16 +1,42 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { getEntregasByNit } from '@/core/pedidos/api/pedidosApi';
 
 const EntregasScreen = () => {
   const { user } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [entregas, setEntregas] = useState<any[]>([]);
+
+  const loadEntregas = useCallback(async () => {
+    if (!user?.nit) {
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const data = await getEntregasByNit(user.nit, { estado: 'programada' });
+      setEntregas(data.entregas || []);
+    } catch (e) {
+      // Silenciar error temporalmente en pantalla inicial
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [user?.nit]);
+
+  useEffect(() => {
+    loadEntregas();
+  }, [loadEntregas]);
+
+  const onRefresh = useCallback(() => {
+    setIsRefreshing(true);
+    loadEntregas();
+  }, [loadEntregas]);
 
   return (
-    <ScrollView 
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.subtitle}>
           Bienvenido, {user?.fullName || user?.email}
@@ -21,44 +47,36 @@ const EntregasScreen = () => {
       </View>
 
       <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Seguimiento de Entregas</ThemedText>
-        
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>🚚 Entregas Pendientes</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Visualiza todas las entregas pendientes de tus pedidos
-          </ThemedText>
-        </View>
-
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📦 En Tránsito</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Rastrea tus pedidos que están en camino a tu ubicación
-          </ThemedText>
-        </View>
-
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>✅ Entregas Completadas</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Revisa el historial de entregas completadas exitosamente
-          </ThemedText>
-        </View>
-
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>📍 Rastreo en Tiempo Real</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Ubicación en vivo del vehículo de entrega
-          </ThemedText>
-        </View>
-
-        <View style={styles.featureCard}>
-          <ThemedText style={styles.featureTitle}>🔔 Notificaciones</ThemedText>
-          <ThemedText style={styles.featureDescription}>
-            Recibe alertas sobre el estado de tus entregas
-          </ThemedText>
-        </View>
+        <ThemedText style={styles.sectionTitle}>Entregas Programadas</ThemedText>
+        {isLoading ? (
+          <View style={styles.loading}>
+            <ActivityIndicator size="large" />
+            <ThemedText>Cargando entregas...</ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={entregas}
+            keyExtractor={(item) => item.entrega_id}
+            renderItem={({ item }) => (
+              <View style={styles.featureCard}>
+                <ThemedText style={styles.featureTitle}>🚚 Pedido {item.pedido_id.slice(0, 8)}…</ThemedText>
+                <ThemedText style={styles.featureDescription}>
+                  Estado: {item.estado_entrega}
+                </ThemedText>
+                <ThemedText style={styles.featureDescription}>
+                  Programada: {item.fecha_hora_programada ? new Date(item.fecha_hora_programada).toLocaleString() : 'N/D'}
+                </ThemedText>
+                <ThemedText style={styles.featureDescription}>
+                  ETA: {item.fecha_hora_estimada_llegada ? new Date(item.fecha_hora_estimada_llegada).toLocaleString() : 'N/D'}
+                </ThemedText>
+              </View>
+            )}
+            refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
+            contentContainerStyle={{ paddingBottom: 100 }}
+          />
+        )}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -93,6 +111,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  loading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
+  },
   featureCard: {
     backgroundColor: 'rgba(88, 86, 214, 0.1)',
     padding: 16,
@@ -114,4 +138,3 @@ const styles = StyleSheet.create({
 });
 
 export default EntregasScreen;
-

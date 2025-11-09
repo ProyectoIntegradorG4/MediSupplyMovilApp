@@ -41,7 +41,7 @@ export const CONFIG = {
  */
 const ANDROID_FALLBACK_URLS = [
     'http://10.0.2.2',      // Emulador Android estándar
-    'http://192.168.101.78',    // IP real de la máquina
+    'http://192.168.10.5',    // IP real de la máquina
     'http://localhost',      // Localhost (solo para web)
     'http://127.0.0.1'       // IP loopback (solo para web)
 ];

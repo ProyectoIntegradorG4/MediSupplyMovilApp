@@ -539,3 +539,61 @@ export const createOrderMock = async (
 // ========================================
 
 export type { Product };
+
+// ========================================
+// FUNCIONES DE ENTREGAS
+// ========================================
+// ========================================
+// FUNCIONES DE HISTORIAL DE PEDIDOS
+// ========================================
+
+/**
+ * Obtiene historial de un pedido
+ * Endpoint: GET /api/v1/pedidos/{pedido_id}/historial
+ */
+export const getPedidoHistorial = async (pedidoId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/pedidos/${encodeURIComponent(pedidoId)}/historial`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading historial:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar historial del pedido');
+  }
+};
+
+/**
+ * Lista entregas por NIT con filtro opcional por estado
+ * Endpoint: GET /api/v1/entregas/{nit}?estado=programada
+ */
+export const getEntregasByNit = async (
+  nit: string,
+  options?: { estado?: 'programada' | 'en_ruta' | 'entregada' | 'devuelta'; page?: number; limit?: number }
+) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/entregas/${encodeURIComponent(nit)}`, {
+      params: {
+        estado: options?.estado,
+        pagina: options?.page || 1,
+        por_pagina: options?.limit || 25,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading entregas:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar entregas');
+  }
+};
+
+/**
+ * Obtiene tracking de una entrega
+ * Endpoint: GET /api/v1/entregas/{entrega_id}/tracking
+ */
+export const getEntregaTracking = async (entregaId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/entregas/${encodeURIComponent(entregaId)}/tracking`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading tracking:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar tracking de entrega');
+  }
+};
