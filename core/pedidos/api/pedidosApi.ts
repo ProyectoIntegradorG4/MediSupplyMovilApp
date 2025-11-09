@@ -562,6 +562,20 @@ export const getPedidoHistorial = async (pedidoId: string) => {
 };
 
 /**
+ * Obtiene un pedido por ID
+ * Endpoint: GET /api/v1/pedidos/{pedido_id}
+ */
+export const getPedidoById = async (pedidoId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/pedidos/${encodeURIComponent(pedidoId)}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading pedido by id:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar el pedido');
+  }
+};
+
+/**
  * Lista entregas por NIT con filtro opcional por estado
  * Endpoint: GET /api/v1/entregas/{nit}?estado=programada
  */

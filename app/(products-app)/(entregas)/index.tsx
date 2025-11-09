@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { getEntregasByNit } from '@/core/pedidos/api/pedidosApi';
 
 const EntregasScreen = () => {
@@ -16,10 +16,33 @@ const EntregasScreen = () => {
       return;
     }
     try {
-      const data = await getEntregasByNit(user.nit, { estado: 'programada' });
-      setEntregas(data.entregas || []);
+      // Obtener entregas en todos los estados relevantes: programada, en_ruta, entregada, devuelta
+      const estados = ['programada', 'en_ruta', 'entregada', 'devuelta'] as const;
+      
+      // Hacer llamadas en paralelo para cada estado
+      const promesas = estados.map(estado => 
+        getEntregasByNit(user.nit, { estado, limit: 50 }).catch(() => ({ entregas: [] }))
+      );
+      
+      const resultados = await Promise.all(promesas);
+      
+      // Combinar todas las entregas y eliminar duplicados
+      const todasEntregas = resultados.flatMap(r => r.entregas || []);
+      const entregasUnicas = todasEntregas.filter((entrega, index, self) =>
+        index === self.findIndex(e => e.entrega_id === entrega.entrega_id)
+      );
+      
+      // Ordenar por fecha de programación (más recientes primero)
+      entregasUnicas.sort((a, b) => {
+        const fechaA = a.fecha_hora_programada ? new Date(a.fecha_hora_programada).getTime() : 0;
+        const fechaB = b.fecha_hora_programada ? new Date(b.fecha_hora_programada).getTime() : 0;
+        return fechaB - fechaA;
+      });
+      
+      setEntregas(entregasUnicas);
     } catch (e) {
-      // Silenciar error temporalmente en pantalla inicial
+      console.error('Error cargando entregas:', e);
+      setEntregas([]);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -47,30 +70,90 @@ const EntregasScreen = () => {
       </View>
 
       <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Entregas Programadas</ThemedText>
+        <ThemedText style={styles.sectionTitle}>Estado de Entregas</ThemedText>
         {isLoading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" />
             <ThemedText>Cargando entregas...</ThemedText>
           </View>
+        ) : entregas.length === 0 ? (
+          <View style={styles.emptyState}>
+            <ThemedText style={styles.emptyText}>No hay entregas disponibles</ThemedText>
+          </View>
         ) : (
           <FlatList
             data={entregas}
             keyExtractor={(item) => item.entrega_id}
-            renderItem={({ item }) => (
-              <View style={styles.featureCard}>
-                <ThemedText style={styles.featureTitle}>🚚 Pedido {item.pedido_id.slice(0, 8)}…</ThemedText>
-                <ThemedText style={styles.featureDescription}>
-                  Estado: {item.estado_entrega}
-                </ThemedText>
-                <ThemedText style={styles.featureDescription}>
-                  Programada: {item.fecha_hora_programada ? new Date(item.fecha_hora_programada).toLocaleString() : 'N/D'}
-                </ThemedText>
-                <ThemedText style={styles.featureDescription}>
-                  ETA: {item.fecha_hora_estimada_llegada ? new Date(item.fecha_hora_estimada_llegada).toLocaleString() : 'N/D'}
-                </ThemedText>
-              </View>
-            )}
+            renderItem={({ item }) => {
+              const getEstadoColor = (estado: string) => {
+                switch (estado?.toLowerCase()) {
+                  case 'programada':
+                    return '#5856D6'; // Azul
+                  case 'en_ruta':
+                    return '#FF9500'; // Naranja
+                  case 'entregada':
+                    return '#34C759'; // Verde
+                  case 'devuelta':
+                    return '#FF3B30'; // Rojo
+                  default:
+                    return '#8E8E93'; // Gris
+                }
+              };
+
+              const getEstadoIcon = (estado: string) => {
+                switch (estado?.toLowerCase()) {
+                  case 'programada':
+                    return '📅';
+                  case 'en_ruta':
+                    return '🚚';
+                  case 'entregada':
+                    return '✅';
+                  case 'devuelta':
+                    return '↩️';
+                  default:
+                    return '📦';
+                }
+              };
+
+              const estadoColor = getEstadoColor(item.estado_entrega);
+              const estadoIcon = getEstadoIcon(item.estado_entrega);
+              const estadoLabel = item.estado_entrega?.toUpperCase().replace('_', ' ') || 'DESCONOCIDO';
+
+              return (
+                <View style={[styles.featureCard, { borderLeftColor: estadoColor }]}>
+                  <View style={styles.cardHeader}>
+                    <ThemedText style={styles.featureTitle}>
+                      {estadoIcon} Pedido {item.pedido_id?.slice(0, 8) || 'N/A'}…
+                    </ThemedText>
+                    <View style={[styles.estadoBadge, { backgroundColor: `${estadoColor}20` }]}>
+                      <ThemedText style={[styles.estadoText, { color: estadoColor }]}>
+                        {estadoLabel}
+                      </ThemedText>
+                    </View>
+                  </View>
+                  {item.fecha_hora_programada && (
+                    <ThemedText style={styles.featureDescription}>
+                      📅 Programada: {new Date(item.fecha_hora_programada).toLocaleString('es-CO')}
+                    </ThemedText>
+                  )}
+                  {item.fecha_hora_estimada_llegada && (
+                    <ThemedText style={styles.featureDescription}>
+                      ⏱️ ETA: {new Date(item.fecha_hora_estimada_llegada).toLocaleString('es-CO')}
+                    </ThemedText>
+                  )}
+                  {item.fecha_hora_entrega_real && (
+                    <ThemedText style={styles.featureDescription}>
+                      ✅ Entregada: {new Date(item.fecha_hora_entrega_real).toLocaleString('es-CO')}
+                    </ThemedText>
+                  )}
+                  {item.placa_vehiculo && (
+                    <ThemedText style={styles.featureDescription}>
+                      🚛 Vehículo: {item.placa_vehiculo}
+                    </ThemedText>
+                  )}
+                </View>
+              );
+            }}
             refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
             contentContainerStyle={{ paddingBottom: 100 }}
           />
@@ -125,15 +208,42 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#5856D6',
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   featureTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    flex: 1,
+  },
+  estadoBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  estadoText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   featureDescription: {
     fontSize: 14,
     opacity: 0.8,
     lineHeight: 20,
+    marginTop: 4,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    opacity: 0.6,
   },
 });
 

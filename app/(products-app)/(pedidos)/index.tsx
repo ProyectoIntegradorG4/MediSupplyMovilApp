@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/presentation/auth/store/useAuthStore';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
 import OrderCard from '@/presentation/theme/components/OrderCard';
 import NewOrderModal from '@/presentation/theme/components/NewOrder';
@@ -22,9 +23,11 @@ import {
   getClientesGerenteMock,
 } from '@/core/pedidos/api/pedidosApi';
 import { Pedido } from '@/core/pedidos/interface/pedido';
+import { Cliente } from '@/core/clientes/interface/cliente';
 
 const PedidosScreen = () => {
   const { user, hasRole } = useAuthStore();
+  const router = useRouter();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -38,7 +41,7 @@ const PedidosScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Para gerente_cuenta: filtro de clientes
-  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [selectedClienteNit, setSelectedClienteNit] = useState<string>('');
   const [showClientePicker, setShowClientePicker] = useState(false);
 
@@ -81,7 +84,29 @@ const PedidosScreen = () => {
         response = { total: 0, page: 1, limit: 25, pedidos: [] };
       }
 
-      setPedidos(response.pedidos);
+      // Enriquecer con datos de cliente (nombre/contacto) si están disponibles
+      const pedidosBase: Pedido[] = response.pedidos;
+
+      if (isGerenteCuenta && clientes.length > 0) {
+        const nitToCliente = new Map<string, Cliente>();
+        clientes.forEach(c => nitToCliente.set(c.nit, c));
+
+        const enriched = pedidosBase.map((p) => {
+          const cliente = nitToCliente.get(p.hospital);
+          if (cliente) {
+            return {
+              ...p,
+              hospital: cliente.nombre_comercial || p.hospital,
+              phone: cliente.telefono || p.phone,
+              doctor: cliente.contacto_principal || p.doctor,
+            };
+          }
+          return p;
+        });
+        setPedidos(enriched);
+      } else {
+        setPedidos(pedidosBase);
+      }
     } catch (error) {
       console.error('❌ [PedidosScreen] Error loading pedidos:', error);
       Alert.alert('Error', 'No se pudieron cargar los pedidos');
@@ -89,7 +114,7 @@ const PedidosScreen = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, isGerenteCuenta, isUsuarioInstitucional, selectedClienteNit]);
+  }, [user, isGerenteCuenta, isUsuarioInstitucional, selectedClienteNit, clientes]);
 
   // Cargar clientes al montar (solo gerente)
   useEffect(() => {
@@ -121,9 +146,8 @@ const PedidosScreen = () => {
 
   // Manejar click en pedido
   const handleOrderPress = useCallback((orderId: string) => {
-    // TODO: Navegar a detalles del pedido
-    console.log('📋 [PedidosScreen] Order pressed:', orderId);
-  }, []);
+    router.push(`/(products-app)/(pedidos)/${orderId}`);
+  }, [router]);
 
   if (isLoading) {
     return (
