@@ -73,6 +73,7 @@ export interface Pedido {
  */
 export interface PedidoCreateRequestBackend {
   nit: string; // NIT del cliente (o del usuario si es institucional)
+  cliente_id: number; // ID del cliente (sede) asociado al NIT
   productos: Array<{
     producto_id: string; // UUID del producto
     cantidad_solicitada: number; // Cantidad > 0

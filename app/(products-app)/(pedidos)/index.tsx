@@ -22,6 +22,8 @@ import {
   getPedidosByGerenteMock,
   getClientesGerenteMock,
 } from '@/core/pedidos/api/pedidosApi';
+import { getClientesPorNit } from '@/core/clientes/api/clientesApi';
+import { fetchClientes } from '@/core/clientes/actions/clientes-actions';
 import { Pedido } from '@/core/pedidos/interface/pedido';
 import { Cliente } from '@/core/clientes/interface/cliente';
 
@@ -44,20 +46,85 @@ const PedidosScreen = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [selectedClienteNit, setSelectedClienteNit] = useState<string>('');
   const [showClientePicker, setShowClientePicker] = useState(false);
+  // Para usuario_institucional: filtro por sede (cliente_id)
+  const [selectedClienteId, setSelectedClienteId] = useState<number | undefined>(undefined);
 
   // Cargar clientes del gerente
   const loadClientes = useCallback(async () => {
-    if (!isGerenteCuenta) return;
-    
+    if (!isGerenteCuenta && !isUsuarioInstitucional) return;
+
     try {
-      const gerenteId = parseInt(user?.id || '1');
-      const clientesList = await getClientesGerenteMock(gerenteId);
-      setClientes(clientesList);
-      console.log(`✅ [PedidosScreen] Loaded ${clientesList.length} clientes for gerente ${gerenteId}`);
+      if (isGerenteCuenta) {
+        const gerenteId = parseInt(user?.id || '1');
+        const clientesList = await getClientesGerenteMock(gerenteId);
+        setClientes(clientesList);
+        console.log(`✅ [PedidosScreen] Loaded ${clientesList.length} clientes for gerente ${gerenteId}`);
+      } else if (isUsuarioInstitucional) {
+        const nit = (user as any)?.nit;
+        const clienteIdFromUser = (user as any)?.clienteId;
+        if (nit) {
+          try {
+            const data = await getClientesPorNit(nit);
+            if (data.clientes.length > 0) {
+              setClientes(data.clientes);
+              console.log(`✅ [PedidosScreen] Loaded ${data.clientes.length} sedes for NIT ${nit}`);
+              if (data.clientes.length === 1) {
+                setSelectedClienteId(data.clientes[0].cliente_id);
+              }
+            } else if (clienteIdFromUser) {
+              // Fallback robusto: cargar cliente por ID del usuario
+              const { getClienteById } = await import('@/core/clientes/api/clientesApi');
+              const cliente = await getClienteById(Number(clienteIdFromUser));
+              setClientes([cliente]);
+              setSelectedClienteId(cliente.cliente_id);
+              console.log(`✅ [PedidosScreen] Loaded sede by cliente_id ${clienteIdFromUser}`);
+            } else {
+              console.warn('⚠️ [PedidosScreen] sin sedes por NIT y sin clienteId en usuario');
+            }
+          } catch (err) {
+            console.error('❌ [PedidosScreen] Error loading clientes por NIT:', err);
+            // Fallback por búsqueda usando el NIT tal cual
+            try {
+              const resp = await fetchClientes({ search: String(nit) });
+              setClientes(resp.clientes);
+              if (resp.clientes.length === 1) {
+                setSelectedClienteId(resp.clientes[0].cliente_id);
+              }
+              console.log(`✅ [PedidosScreen] Fallback loaded ${resp.clientes.length} sedes for NIT ${nit}`);
+            } catch (e) {
+              console.error('❌ [PedidosScreen] Fallback search failed:', e);
+              // Último recurso: usar clienteId del usuario si existe
+              if (clienteIdFromUser) {
+                try {
+                  const { getClienteById } = await import('@/core/clientes/api/clientesApi');
+                  const cliente = await getClienteById(Number(clienteIdFromUser));
+                  setClientes([cliente]);
+                  setSelectedClienteId(cliente.cliente_id);
+                } catch (e2) {
+                  console.error('❌ [PedidosScreen] Load by clienteId failed:', e2);
+                }
+              }
+            }
+          }
+        } else {
+          console.warn('⚠️ [PedidosScreen] usuario_institucional sin NIT');
+          // Si tenemos clienteId del usuario, intentar por ID
+          if (clienteIdFromUser) {
+            try {
+              const { getClienteById } = await import('@/core/clientes/api/clientesApi');
+              const cliente = await getClienteById(Number(clienteIdFromUser));
+              setClientes([cliente]);
+              setSelectedClienteId(cliente.cliente_id);
+            } catch (e) {
+              console.error('❌ [PedidosScreen] Load by clienteId without NIT failed:', e);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('❌ [PedidosScreen] Error loading clientes:', error);
     }
-  }, [user, isGerenteCuenta]);
+  }, [user, isGerenteCuenta, isUsuarioInstitucional]);
   
   // Cargar pedidos
   const loadPedidos = useCallback(async () => {
@@ -65,11 +132,10 @@ const PedidosScreen = () => {
       let response;
 
       if (isUsuarioInstitucional) {
-        // Usuario institucional: solo sus pedidos
-        const clienteId = parseInt(user?.id || '1');
-        response = await getPedidosByClienteMock(clienteId);
+        // Usuario institucional: pedidos por NIT (opcionalmente filtrar por sede)
+        response = await getPedidosByClienteMock(selectedClienteId);
         console.log(
-          `✅ [PedidosScreen] Loaded ${response.pedidos.length} pedidos for cliente ${clienteId}`
+          `✅ [PedidosScreen] Loaded ${response.pedidos.length} pedidos for NIT ${ (user as any)?.nit || 'N/A'}${selectedClienteId ? ` (cliente_id: ${selectedClienteId})` : ''}`
         );
       } else if (isGerenteCuenta) {
         // Gerente: pedidos de todos sus clientes o filtrados por NIT
@@ -104,6 +170,25 @@ const PedidosScreen = () => {
           return p;
         });
         setPedidos(enriched);
+      } else if (isUsuarioInstitucional && clientes.length > 0) {
+        // Enriquecer usando el catálogo de sedes del NIT cargado previamente
+        const idToCliente = new Map<number, Cliente>();
+        clientes.forEach(c => idToCliente.set(c.cliente_id, c));
+
+        const enriched = pedidosBase.map((p) => {
+          const cliente = idToCliente.get(p.cliente_id);
+          if (cliente) {
+            return {
+              ...p,
+              hospital: cliente.nombre_comercial || p.hospital,
+              type: (cliente.tipo_institucion as any) || p.type,
+              phone: cliente.telefono || p.phone,
+              doctor: cliente.contacto_principal || p.doctor,
+            };
+          }
+          return p;
+        });
+        setPedidos(enriched);
       } else {
         setPedidos(pedidosBase);
       }
@@ -118,10 +203,10 @@ const PedidosScreen = () => {
 
   // Cargar clientes al montar (solo gerente)
   useEffect(() => {
-    if (isGerenteCuenta) {
+    if (isGerenteCuenta || isUsuarioInstitucional) {
       loadClientes();
     }
-  }, [isGerenteCuenta, loadClientes]);
+  }, [isGerenteCuenta, isUsuarioInstitucional, loadClientes]);
   
   // Cargar pedidos al montar o cuando cambie el filtro
   useEffect(() => {
@@ -228,6 +313,71 @@ const PedidosScreen = () => {
                     onPress={() => {
                       setSelectedClienteNit(cliente.nit);
                       setShowClientePicker(false);
+                    }}
+                  >
+                    <ThemedText style={styles.pickerItemText}>
+                      {cliente.nombre_comercial}
+                    </ThemedText>
+                    <ThemedText style={styles.pickerItemSubtext}>
+                      NIT: {cliente.nit}
+                    </ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Filtro de sedes para usuario_institucional */}
+      {isUsuarioInstitucional && clientes.length > 0 && (
+        <View style={styles.filterContainer}>
+          <ThemedText style={styles.filterLabel}>Filtrar por sede:</ThemedText>
+          <TouchableOpacity
+            style={[styles.pickerButton, { borderColor: primaryColor }]}
+            onPress={() => setShowClientePicker(!showClientePicker)}
+          >
+            <ThemedText style={styles.pickerButtonText}>
+              {selectedClienteId
+                ? clientes.find(c => c.cliente_id === selectedClienteId)?.nombre_comercial || 'Seleccionar sede'
+                : clientes.length === 1
+                ? clientes[0].nombre_comercial
+                : 'Todas las sedes'}
+            </ThemedText>
+            <Ionicons 
+              name={showClientePicker ? 'chevron-up' : 'chevron-down'} 
+              size={20} 
+              color={textColor} 
+            />
+          </TouchableOpacity>
+          
+          {showClientePicker && (
+            <View style={styles.pickerDropdown}>
+              <ScrollView style={styles.pickerScroll}>
+                <TouchableOpacity
+                  style={[
+                    styles.pickerItem,
+                    !selectedClienteId && { backgroundColor: primaryColor + '20' }
+                  ]}
+                  onPress={() => {
+                    setSelectedClienteId(undefined);
+                    setShowClientePicker(false);
+                    loadPedidos();
+                  }}
+                >
+                  <ThemedText style={styles.pickerItemText}>Todas las sedes</ThemedText>
+                </TouchableOpacity>
+                {clientes.map((cliente) => (
+                  <TouchableOpacity
+                    key={cliente.cliente_id}
+                    style={[
+                      styles.pickerItem,
+                      selectedClienteId === cliente.cliente_id && { backgroundColor: primaryColor + '20' }
+                    ]}
+                    onPress={() => {
+                      setSelectedClienteId(cliente.cliente_id);
+                      setShowClientePicker(false);
+                      loadPedidos();
                     }}
                   >
                     <ThemedText style={styles.pickerItemText}>

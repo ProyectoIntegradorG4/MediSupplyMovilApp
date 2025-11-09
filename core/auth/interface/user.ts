@@ -5,4 +5,5 @@ export interface User {
   isActive: boolean;
   roles: string[];
   nit?: string; // NIT del usuario para uso en pedidos
+  clienteId: number; // Cliente asociado; requerido para Pedidos
 }

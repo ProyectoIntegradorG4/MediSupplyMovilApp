@@ -80,6 +80,11 @@ pedidosApi.interceptors.request.use(async (config) => {
       } else if (!user.nit) {
         console.warn('⚠️ [PEDIDOS API] Usuario sin NIT en storage:', user);
       }
+      // Para usuario_institucional: si tenemos clienteId en el usuario, enviarlo en header
+      if (Array.isArray(user.roles) && user.roles.includes('usuario_institucional') && (user.clienteId || user.cliente_id)) {
+        const clienteId = user.clienteId ?? user.cliente_id;
+        config.headers['cliente-id'] = String(clienteId);
+      }
     } catch (e) {
       console.error('❌ [PEDIDOS API] Error parseando userData:', e);
     }
@@ -295,7 +300,7 @@ export const getClientesGerenteMock = async (gerenteId: number) => {
  * @returns Lista paginada de pedidos del cliente
  */
 export const getPedidosByClienteMock = async (
-  clienteId: number,
+  clienteId?: number,
   filters?: Omit<PedidosFilter, 'cliente_id'>
 ): Promise<PedidosListResponse> => {
   try {
@@ -303,6 +308,7 @@ export const getPedidosByClienteMock = async (
     // No es necesario enviar usuario_id como parámetro, el backend lo obtendrá del header
     const response = await pedidosApi.get('/api/v1/pedidos/', {
       params: {
+        ...(clienteId ? { cliente_id: clienteId } : {}),
         // No enviar usuario_id, el backend filtrará automáticamente por NIT del header
         estado: filters?.status,
         pagina: filters?.page || 1,
@@ -315,7 +321,7 @@ export const getPedidosByClienteMock = async (
     // Mapear al formato esperado por el frontend
     const pedidosMapeados: Pedido[] = pedidos.map((p: any) => ({
       id: p.pedido_id,
-      cliente_id: clienteId,
+      cliente_id: p.cliente_id ?? (clienteId || 0),
       hospital: p.nit || 'N/A', // Usar NIT como identificador temporal
       type: 'Hospital' as any,
       status: p.estado as any,
@@ -433,15 +439,6 @@ export const createOrderMock = async (
   request: PedidoCreateRequest
 ): Promise<PedidoCreateResponse> => {
   try {
-    // Obtener NIT del cliente (necesario para el backend)
-    // TODO: Obtener el NIT del cliente desde el cliente-service
-    const clientes = await getClientesGerenteMock(request.gerente_id || 1);
-    const cliente = clientes.find((c: any) => c.cliente_id === request.cliente_id);
-
-    if (!cliente && !request.cliente_id) {
-      throw new Error('cliente_id es requerido');
-    }
-
     // Obtener usuario actual para headers
     const token = await SecureStorageAdapter.getItem('token');
     const userData = await SecureStorageAdapter.getItem('user');
@@ -449,6 +446,7 @@ export const createOrderMock = async (
     let usuarioId = 1;
     let rolUsuario = 'usuario_institucional';
     let nit = '900123456'; // Fallback
+    let clienteIdForOrder: number | undefined = request.cliente_id;
 
     if (userData) {
       try {
@@ -457,12 +455,22 @@ export const createOrderMock = async (
         
         if (user.roles?.includes('gerente_cuenta')) {
           rolUsuario = 'gerente_cuenta';
-          // Para gerente_cuenta, el NIT es del cliente seleccionado
+          // Para gerente_cuenta, mantener NIT por cliente seleccionado (requiere fetch)
+          if (!clienteIdForOrder) {
+            throw new Error('cliente_id es requerido para gerente_cuenta');
+          }
+          // Cargar cliente para obtener NIT
+          const clientes = await getClientesGerenteMock(parseInt(user.id) || 1);
+          const cliente = clientes.find((c: any) => c.cliente_id === clienteIdForOrder);
           nit = cliente?.nit || nit;
         } else if (user.roles?.includes('usuario_institucional')) {
           rolUsuario = 'usuario_institucional';
-          // Para usuario_institucional, el NIT viene del usuario mismo
+          // Para usuario_institucional, el NIT y cliente_id vienen del usuario
           nit = user.nit || nit;
+          clienteIdForOrder = user.clienteId ?? user.cliente_id ?? clienteIdForOrder;
+          if (!clienteIdForOrder) {
+            throw new Error('cliente_id es requerido para usuario_institucional');
+          }
         }
       } catch (e) {
         // Ignorar
@@ -472,6 +480,7 @@ export const createOrderMock = async (
     // Convertir formato frontend a formato backend
     const requestBackend: PedidoCreateRequestBackend = {
       nit: nit,
+      cliente_id: clienteIdForOrder as number,
       productos: request.items.map(item => ({
         producto_id: item.productoId,
         cantidad_solicitada: item.cantidad,
@@ -479,12 +488,16 @@ export const createOrderMock = async (
       observaciones: request.observaciones,
     };
 
-    const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, {
-      headers: {
-        'usuario-id': String(usuarioId),
-        'rol-usuario': rolUsuario,
-      },
-    });
+    const extraHeaders: Record<string, string> = {
+      'usuario-id': String(usuarioId),
+      'rol-usuario': rolUsuario,
+    };
+    // Para usuario_institucional, enviar también cliente-id con la sede seleccionada
+    if (rolUsuario === 'usuario_institucional' && clienteIdForOrder) {
+      extraHeaders['cliente-id'] = String(clienteIdForOrder);
+    }
+
+    const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, { headers: extraHeaders });
 
     const pedidoData = response.data.pedido || response.data;
 
@@ -503,7 +516,7 @@ export const createOrderMock = async (
       id: pedidoData.pedido_id || pedidoData.id,
       refNumber: pedidoData.numero_pedido || `PED-${Date.now()}`,
       status: pedidoData.estado || 'pendiente',
-      cliente_id: request.cliente_id,
+      cliente_id: pedidoData.cliente_id ?? request.cliente_id,
       items: items,
       total: total,
       createdAt: pedidoData.fecha_creacion || new Date().toISOString(),

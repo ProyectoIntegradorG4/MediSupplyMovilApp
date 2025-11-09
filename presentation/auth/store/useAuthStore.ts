@@ -74,7 +74,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       id: resp.user.id,
       email: resp.user.email,
       roles: resp.user.roles,
-      fullName: resp.user.fullName
+      fullName: resp.user.fullName,
+      clienteId: resp.user.clienteId,
     });
 
     const result = await get().changeStatus(resp?.token, resp?.user);
