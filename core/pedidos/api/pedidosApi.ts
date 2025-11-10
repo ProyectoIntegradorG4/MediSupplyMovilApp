@@ -375,7 +375,6 @@ export const getPedidosByGerenteMock = async (
   try {
     const response = await pedidosApi.get('/api/v1/pedidos/', {
       params: {
-        usuario_id: gerenteId,
         nit: filters?.nit, // Filtrar por NIT específico si se proporciona
         estado: filters?.status,
         pagina: filters?.page || 1,
