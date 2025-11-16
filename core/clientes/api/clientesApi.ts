@@ -125,6 +125,54 @@ export const getTiposInstitucion = async (): Promise<TiposInstitucionResponse> =
 };
 
 /**
+ * Obtiene las sedes (clientes) asociadas a un NIT específico
+ * 
+ * Endpoint: GET /api/v1/clientes/por-nit?nit=...
+ * 
+ * @param nit NIT del cual se desean obtener las sedes
+ * @returns Objeto con array de clientes
+ */
+export const getClientesPorNit = async (nit: string): Promise<{ clientes: Cliente[] }> => {
+  // Intentar con varias variantes del NIT sin modificar el valor almacenado
+  const candidates = Array.from(new Set([
+    String(nit),
+    String(nit).trim(),
+    String(nit).replace(/\s+/g, ''),           // sin espacios
+    String(nit).replace(/[^0-9A-Za-z-]/g, ''), // limpiar chars raros, mantener guiones
+    String(nit).includes('-') ? String(nit).split('-')[0] : String(nit), // base sin DV si aplica
+  ]));
+
+  let lastError: any = null;
+
+  for (const candidate of candidates) {
+    try {
+      const { data } = await clientesApi.get<{ clientes: Cliente[] }>(
+        '/api/v1/clientes/por-nit',
+        { params: { nit: candidate } }
+      );
+      return data;
+    } catch (error: any) {
+      lastError = error;
+      // Si es 422/400, intentar la siguiente variante
+      const status = error?.response?.status;
+      if (status === 400 || status === 422) {
+        continue;
+      }
+      // Otros errores: devolver fallo
+      throw error;
+    }
+  }
+
+  // Si todas fallan por validación, retornar vacío para permitir fallback por búsqueda
+  if (lastError?.response?.status === 400 || lastError?.response?.status === 422) {
+    return { clientes: [] };
+  }
+
+  // Devolver el último error si fue distinto a validación
+  throw lastError || new Error('Error desconocido al consultar clientes por NIT');
+};
+
+/**
  * Health check del servicio de clientes
  * 
  * Endpoint: GET /health/cliente

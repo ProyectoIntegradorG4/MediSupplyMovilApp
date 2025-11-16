@@ -99,6 +99,8 @@ export interface LoginResponse {
   isActive: boolean;
   roles: string[];
   token: string;
+  nit?: string; // NIT del usuario para uso en pedidos
+  clienteId: number; // ID del cliente asociado al usuario institucional
 }
 
 /**

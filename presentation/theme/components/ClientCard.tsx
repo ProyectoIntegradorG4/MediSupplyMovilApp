@@ -16,6 +16,7 @@ export default function ClientCard({
     const primaryColor = useThemeColor({}, 'primary');
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
+    const borderColor = useThemeColor({}, 'border');
 
     // Construir dirección completa
     const fullAddress = [
@@ -43,7 +44,7 @@ export default function ClientCard({
                 <View
                     style={[
                         styles.typeBadge,
-                        { backgroundColor, borderColor: '#ccc' },
+                        { backgroundColor, borderColor },
                     ]}
                 >
                     <Text style={[styles.typeText, { color: primaryColor }]}>
@@ -129,7 +130,7 @@ export default function ClientCard({
                     styles.button,
                     {
                         backgroundColor,
-                        borderColor: '#ccc',
+                        borderColor,
                         opacity: pressed ? 0.7 : 1,
                     },
                 ]}
