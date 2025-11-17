@@ -41,7 +41,7 @@ export const CONFIG = {
  */
 const ANDROID_FALLBACK_URLS = [
     'http://10.0.2.2',      // Emulador Android estándar
-    'http://192.168.101.78',    // IP real de la máquina
+    'http://192.168.5.107',    // IP real de la máquina
     'http://localhost',      // Localhost (solo para web)
     'http://127.0.0.1'       // IP loopback (solo para web)
 ];
@@ -117,11 +117,11 @@ function getAuthApiUrl(): string {
     // Desarrollo: usar URL específica por plataforma para el auth-service
     switch (Platform.OS) {
         case 'ios':
-            return process.env.EXPO_PUBLIC_AUTH_URL_IOS || 'http://192.168.5.107:8004';
+            return process.env.EXPO_PUBLIC_AUTH_URL_IOS || 'http://192.168.5.107';
         case 'android':
-            return process.env.EXPO_PUBLIC_AUTH_URL_ANDROID || 'http://10.0.2.2:8004';
+            return process.env.EXPO_PUBLIC_AUTH_URL_ANDROID || 'http://192.168.5.107';
         default:
-            return 'http://localhost:8004';
+            return 'http://localhost';
     }
 }
 

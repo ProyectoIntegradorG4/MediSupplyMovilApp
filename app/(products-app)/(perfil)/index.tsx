@@ -3,9 +3,12 @@ import ThemedButton from '@/presentation/theme/components/ThemedButton';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { LanguageSelector } from '@/presentation/i18n/components/LanguageSelector';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 const PerfilScreen = () => {
   const { user, logout } = useAuthStore();
+  const { t } = useTranslation();
 
   return (
     <ScrollView 
@@ -14,64 +17,68 @@ const PerfilScreen = () => {
     >
       <View style={styles.header}>
         <ThemedText type="title" style={styles.nameText}>
-          {user?.fullName || 'Usuario'}
+          {user?.fullName || t('profile.user')}
         </ThemedText>
         <ThemedText style={styles.emailText}>
           {user?.email}
         </ThemedText>
         <View style={styles.roleBadge}>
           <ThemedText style={styles.roleText}>
-            {user?.roles?.join(', ') || 'Sin rol'}
+            {user?.roles?.join(', ') || t('profile.noRole')}
           </ThemedText>
         </View>
       </View>
 
       <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Información Personal</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('profile.personalInfo')}</ThemedText>
         
         <View style={styles.infoCard}>
-          <ThemedText style={styles.infoLabel}>ID de Usuario</ThemedText>
+          <ThemedText style={styles.infoLabel}>{t('profile.userId')}</ThemedText>
           <ThemedText style={styles.infoValue}>{user?.id || 'N/A'}</ThemedText>
         </View>
 
         <View style={styles.infoCard}>
-          <ThemedText style={styles.infoLabel}>Email</ThemedText>
+          <ThemedText style={styles.infoLabel}>{t('profile.email')}</ThemedText>
           <ThemedText style={styles.infoValue}>{user?.email || 'N/A'}</ThemedText>
         </View>
 
         <View style={styles.infoCard}>
-          <ThemedText style={styles.infoLabel}>Nombre Completo</ThemedText>
+          <ThemedText style={styles.infoLabel}>{t('profile.fullName')}</ThemedText>
           <ThemedText style={styles.infoValue}>{user?.fullName || 'N/A'}</ThemedText>
         </View>
 
         <View style={styles.infoCard}>
-          <ThemedText style={styles.infoLabel}>Roles</ThemedText>
+          <ThemedText style={styles.infoLabel}>{t('profile.roles')}</ThemedText>
           <ThemedText style={styles.infoValue}>
             {user?.roles?.join(', ') || 'N/A'}
           </ThemedText>
         </View>
 
-        <ThemedText style={[styles.sectionTitle, { marginTop: 30 }]}>Configuración</ThemedText>
+        <ThemedText style={[styles.sectionTitle, { marginTop: 30 }]}>{t('profile.settings')}</ThemedText>
 
         <View style={styles.actionCard}>
-          <ThemedText style={styles.actionTitle}>🔔 Notificaciones</ThemedText>
+          <ThemedText style={styles.actionTitle}>🔔 {t('profile.notifications')}</ThemedText>
           <ThemedText style={styles.actionDescription}>
-            Gestiona tus preferencias de notificaciones
+            {t('profile.notificationsDescription')}
           </ThemedText>
         </View>
 
         <View style={styles.actionCard}>
-          <ThemedText style={styles.actionTitle}>🔒 Seguridad</ThemedText>
+          <ThemedText style={styles.actionTitle}>🔒 {t('profile.security')}</ThemedText>
           <ThemedText style={styles.actionDescription}>
-            Cambia tu contraseña y configura la seguridad
+            {t('profile.securityDescription')}
           </ThemedText>
         </View>
 
         <View style={styles.actionCard}>
-          <ThemedText style={styles.actionTitle}>⚙️ Preferencias</ThemedText>
+          <ThemedText style={styles.actionTitle}>⚙️ {t('profile.preferences')}</ThemedText>
           <ThemedText style={styles.actionDescription}>
-            Personaliza la aplicación según tus necesidades
+            {t('profile.preferencesDescription')}
           </ThemedText>
+        </View>
+
+        <View style={styles.actionCard}>
+          <LanguageSelector />
         </View>
 
         <View style={styles.logoutContainer}>
@@ -79,7 +86,7 @@ const PerfilScreen = () => {
             onPress={logout}
             icon="log-out-outline"
           >
-            Cerrar Sesión
+            {t('profile.logout')}
           </ThemedButton>
         </View>
       </View>

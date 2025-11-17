@@ -19,6 +19,7 @@ export interface AuthResponse {
   roles: string[];
   token: string;
   nit?: string;
+  clienteId: number;
 }
 
 /**
@@ -33,6 +34,7 @@ const returnUserToken = (
     roles: string[];
     token: string;
     nit?: string;
+    clienteId: number;
   }
 ): {
   user: User;
@@ -45,6 +47,7 @@ const returnUserToken = (
     isActive: data.isActive,
     roles: data.roles,
     nit: data.nit, // Incluir NIT del usuario
+    clienteId: data.clienteId, // Incluir clienteId del usuario institucional
   };
 
   return {
@@ -73,7 +76,8 @@ export const authLogin = async (email: string, password: string) => {
       email: data.email,
       fullName: data.fullName,
       roles: data.roles,
-      nit: data.nit
+      nit: data.nit,
+      clienteId: data.clienteId,
     });
 
     return returnUserToken(data);
@@ -123,7 +127,8 @@ export const authCheckStatus = async () => {
           id: user.id,
           email: user.email,
           fullName: user.fullName,
-          nit: user.nit
+          nit: user.nit,
+          clienteId: user.clienteId,
         });
       } catch (e) {
         console.warn('⚠️ Error parseando usuario del storage, reconstruyendo...');
@@ -134,6 +139,7 @@ export const authCheckStatus = async () => {
           fullName: '',
           isActive: true,
           roles: data.roles,
+          clienteId: 1,
         };
       }
     } else {
@@ -145,6 +151,7 @@ export const authCheckStatus = async () => {
         fullName: '',
         isActive: true,
         roles: data.roles,
+        clienteId: 1,
       };
     }
 

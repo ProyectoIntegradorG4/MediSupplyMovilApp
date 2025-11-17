@@ -73,6 +73,7 @@ export interface Pedido {
  */
 export interface PedidoCreateRequestBackend {
   nit: string; // NIT del cliente (o del usuario si es institucional)
+  cliente_id: number; // ID del cliente (sede) asociado al NIT
   productos: Array<{
     producto_id: string; // UUID del producto
     cantidad_solicitada: number; // Cantidad > 0
@@ -149,9 +150,11 @@ export const calculatePedidoTotal = (items: PedidoItem[]): number => {
 
 /**
  * Formatea el monto como string para mostrar
+ * Usa el idioma actual de la aplicación
  */
 export const formatAmount = (amount: number): string => {
-  return `$${amount.toLocaleString('es-CO')}`;
+  const { formatCurrency } = require('@/helpers/i18n/formatting');
+  return formatCurrency(amount);
 };
 
 /**

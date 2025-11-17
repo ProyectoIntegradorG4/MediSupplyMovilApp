@@ -19,7 +19,8 @@ import ShoppingCart from './ShoppingCart';
 import { Cliente } from '@/core/clientes/interface/cliente';
 import { PedidoItem, PedidoCreateRequest } from '@/core/pedidos/interface/pedido';
 import { getClientesGerenteMock, getProductsMock, createOrderMock, getProductBySkuMock, checkStockMock, Product } from '@/core/pedidos/api/pedidosApi';
-import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
+import { fetchClientes, fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
+import { getClientesPorNit } from '@/core/clientes/api/clientesApi';
 
 type OrderStep = 'cliente' | 'productos' | 'resumen' | 'confirmacion';
 
@@ -73,27 +74,53 @@ export default function NewOrderModal({
 
   // Cargar clientes si es gerente
   useEffect(() => {
-    if (isOpen && isGerenteCuenta && clientes.length === 0) {
+    if (isOpen && clientes.length === 0) {
       loadClientes();
     }
-  }, [isOpen, isGerenteCuenta]);
+  }, [isOpen, isGerenteCuenta, isUsuarioInstitucional]);
 
-  // Auto-asignar cliente para usuario institucional
-  useEffect(() => {
-    if (isOpen && isUsuarioInstitucional && user?.id) {
-      // Simular cliente desde user (en producción vendría del backend)
-      const mockCliente: Cliente = {
-        cliente_id: parseInt(user.id) || 1, // Usar ID del usuario como cliente_id
-        nit: '900123456-1',
-        nombre_comercial: user.fullName || 'Mi Institución',
-        razon_social: user.fullName || 'Mi Institución',
-        tipo_institucion: 'Hospital',
-        pais: 'Colombia',
-        activo: true,
-      };
-      setSelectedCliente(mockCliente);
+  // Cargar clientes/sedes según rol
+  const loadClientes = async () => {
+    setIsLoadingClientes(true);
+    try {
+      if (isGerenteCuenta) {
+        const gerenteId = parseInt(user?.id || '1');
+        
+        // Intentar usar API real primero, sino usar mock
+        try {
+          const response = await fetchClientesDeGerente(gerenteId);
+          setClientes(response.clientes);
+        } catch {
+          const mockClientes = await getClientesGerenteMock(gerenteId);
+          setClientes(mockClientes as Cliente[]);
+        }
+      } else if (isUsuarioInstitucional) {
+        // No permitir seleccionar sede; usar la del usuario del store
+        const nit = (user as any)?.nit || '';
+        const clienteId = (user as any)?.clienteId;
+        if (!clienteId) {
+          console.warn('Usuario institucional sin clienteId en sesión');
+        }
+        const placeholderCliente: Cliente = {
+          cliente_id: Number(clienteId) || 1,
+          nit: String(nit),
+          nombre_comercial: 'Mi sede',
+          razon_social: 'Mi institución',
+          tipo_institucion: 'Hospital',
+          pais: 'Colombia',
+          activo: true,
+        };
+        setClientes([placeholderCliente]);
+        setSelectedCliente(placeholderCliente);
+        setCurrentStep('productos');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudieron cargar los clientes');
+      console.error('Error loading clientes:', error);
+    } finally {
+      setIsLoadingClientes(false);
     }
-  }, [isOpen, isUsuarioInstitucional, user]);
+  };
 
   const loadProducts = async () => {
     setIsLoadingProducts(true);
@@ -108,27 +135,7 @@ export default function NewOrderModal({
     }
   };
 
-  const loadClientes = async () => {
-    setIsLoadingClientes(true);
-    try {
-      const gerenteId = parseInt(user?.id || '1');
-      
-      // Intentar usar API real primero, sino usar mock
-      try {
-        const response = await fetchClientesDeGerente(gerenteId);
-        setClientes(response.clientes);
-      } catch {
-        // Fallback a mock
-        const mockClientes = await getClientesGerenteMock(gerenteId);
-        setClientes(mockClientes as Cliente[]);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los clientes');
-      console.error('Error loading clientes:', error);
-    } finally {
-      setIsLoadingClientes(false);
-    }
-  };
+
 
   // Mapa de stock para validaciones
   const productStockMap = useMemo(() => {

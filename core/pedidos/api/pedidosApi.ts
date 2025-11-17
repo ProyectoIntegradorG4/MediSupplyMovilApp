@@ -9,6 +9,7 @@
 
 import { CONFIG } from '@/constants/config';
 import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
+import { formatTime, formatDate } from '@/helpers/i18n/formatting';
 import axios from 'axios';
 import {
   Pedido,
@@ -79,6 +80,11 @@ pedidosApi.interceptors.request.use(async (config) => {
         console.log(`📋 [PEDIDOS API] NIT usuario agregado al header: ${user.nit}`);
       } else if (!user.nit) {
         console.warn('⚠️ [PEDIDOS API] Usuario sin NIT en storage:', user);
+      }
+      // Para usuario_institucional: si tenemos clienteId en el usuario, enviarlo en header
+      if (Array.isArray(user.roles) && user.roles.includes('usuario_institucional') && (user.clienteId || user.cliente_id)) {
+        const clienteId = user.clienteId ?? user.cliente_id;
+        config.headers['cliente-id'] = String(clienteId);
       }
     } catch (e) {
       console.error('❌ [PEDIDOS API] Error parseando userData:', e);
@@ -295,7 +301,7 @@ export const getClientesGerenteMock = async (gerenteId: number) => {
  * @returns Lista paginada de pedidos del cliente
  */
 export const getPedidosByClienteMock = async (
-  clienteId: number,
+  clienteId?: number,
   filters?: Omit<PedidosFilter, 'cliente_id'>
 ): Promise<PedidosListResponse> => {
   try {
@@ -303,6 +309,7 @@ export const getPedidosByClienteMock = async (
     // No es necesario enviar usuario_id como parámetro, el backend lo obtendrá del header
     const response = await pedidosApi.get('/api/v1/pedidos/', {
       params: {
+        ...(clienteId ? { cliente_id: clienteId } : {}),
         // No enviar usuario_id, el backend filtrará automáticamente por NIT del header
         estado: filters?.status,
         pagina: filters?.page || 1,
@@ -315,17 +322,17 @@ export const getPedidosByClienteMock = async (
     // Mapear al formato esperado por el frontend
     const pedidosMapeados: Pedido[] = pedidos.map((p: any) => ({
       id: p.pedido_id,
-      cliente_id: clienteId,
+      cliente_id: p.cliente_id ?? (clienteId || 0),
       hospital: p.nit || 'N/A', // Usar NIT como identificador temporal
       type: 'Hospital' as any,
       status: p.estado as any,
       refNumber: p.numero_pedido,
-      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      time: formatTime(p.fecha_creacion),
       phone: '',
       doctor: '',
       amount: formatAmount(p.monto_total),
       units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
-      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      creationDate: formatDate(p.fecha_creacion),
       deliveryDate: '',
       items: (p.detalles || []).map((d: any) => ({
         productoId: d.producto_id,
@@ -369,7 +376,6 @@ export const getPedidosByGerenteMock = async (
   try {
     const response = await pedidosApi.get('/api/v1/pedidos/', {
       params: {
-        usuario_id: gerenteId,
         nit: filters?.nit, // Filtrar por NIT específico si se proporciona
         estado: filters?.status,
         pagina: filters?.page || 1,
@@ -387,12 +393,12 @@ export const getPedidosByGerenteMock = async (
       type: 'Hospital' as any,
       status: p.estado as any,
       refNumber: p.numero_pedido,
-      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      time: formatTime(p.fecha_creacion),
       phone: '',
       doctor: '',
       amount: formatAmount(p.monto_total),
       units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
-      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      creationDate: formatDate(p.fecha_creacion),
       deliveryDate: '',
       gerente_id: gerenteId,
       items: (p.detalles || []).map((d: any) => ({
@@ -433,15 +439,6 @@ export const createOrderMock = async (
   request: PedidoCreateRequest
 ): Promise<PedidoCreateResponse> => {
   try {
-    // Obtener NIT del cliente (necesario para el backend)
-    // TODO: Obtener el NIT del cliente desde el cliente-service
-    const clientes = await getClientesGerenteMock(request.gerente_id || 1);
-    const cliente = clientes.find((c: any) => c.cliente_id === request.cliente_id);
-
-    if (!cliente && !request.cliente_id) {
-      throw new Error('cliente_id es requerido');
-    }
-
     // Obtener usuario actual para headers
     const token = await SecureStorageAdapter.getItem('token');
     const userData = await SecureStorageAdapter.getItem('user');
@@ -449,6 +446,7 @@ export const createOrderMock = async (
     let usuarioId = 1;
     let rolUsuario = 'usuario_institucional';
     let nit = '900123456'; // Fallback
+    let clienteIdForOrder: number | undefined = request.cliente_id;
 
     if (userData) {
       try {
@@ -457,12 +455,22 @@ export const createOrderMock = async (
         
         if (user.roles?.includes('gerente_cuenta')) {
           rolUsuario = 'gerente_cuenta';
-          // Para gerente_cuenta, el NIT es del cliente seleccionado
+          // Para gerente_cuenta, mantener NIT por cliente seleccionado (requiere fetch)
+          if (!clienteIdForOrder) {
+            throw new Error('cliente_id es requerido para gerente_cuenta');
+          }
+          // Cargar cliente para obtener NIT
+          const clientes = await getClientesGerenteMock(parseInt(user.id) || 1);
+          const cliente = clientes.find((c: any) => c.cliente_id === clienteIdForOrder);
           nit = cliente?.nit || nit;
         } else if (user.roles?.includes('usuario_institucional')) {
           rolUsuario = 'usuario_institucional';
-          // Para usuario_institucional, el NIT viene del usuario mismo
+          // Para usuario_institucional, el NIT y cliente_id vienen del usuario
           nit = user.nit || nit;
+          clienteIdForOrder = user.clienteId ?? user.cliente_id ?? clienteIdForOrder;
+          if (!clienteIdForOrder) {
+            throw new Error('cliente_id es requerido para usuario_institucional');
+          }
         }
       } catch (e) {
         // Ignorar
@@ -472,6 +480,7 @@ export const createOrderMock = async (
     // Convertir formato frontend a formato backend
     const requestBackend: PedidoCreateRequestBackend = {
       nit: nit,
+      cliente_id: clienteIdForOrder as number,
       productos: request.items.map(item => ({
         producto_id: item.productoId,
         cantidad_solicitada: item.cantidad,
@@ -479,12 +488,16 @@ export const createOrderMock = async (
       observaciones: request.observaciones,
     };
 
-    const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, {
-      headers: {
-        'usuario-id': String(usuarioId),
-        'rol-usuario': rolUsuario,
-      },
-    });
+    const extraHeaders: Record<string, string> = {
+      'usuario-id': String(usuarioId),
+      'rol-usuario': rolUsuario,
+    };
+    // Para usuario_institucional, enviar también cliente-id con la sede seleccionada
+    if (rolUsuario === 'usuario_institucional' && clienteIdForOrder) {
+      extraHeaders['cliente-id'] = String(clienteIdForOrder);
+    }
+
+    const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, { headers: extraHeaders });
 
     const pedidoData = response.data.pedido || response.data;
 
@@ -503,7 +516,7 @@ export const createOrderMock = async (
       id: pedidoData.pedido_id || pedidoData.id,
       refNumber: pedidoData.numero_pedido || `PED-${Date.now()}`,
       status: pedidoData.estado || 'pendiente',
-      cliente_id: request.cliente_id,
+      cliente_id: pedidoData.cliente_id ?? request.cliente_id,
       items: items,
       total: total,
       createdAt: pedidoData.fecha_creacion || new Date().toISOString(),
@@ -539,3 +552,75 @@ export const createOrderMock = async (
 // ========================================
 
 export type { Product };
+
+// ========================================
+// FUNCIONES DE ENTREGAS
+// ========================================
+// ========================================
+// FUNCIONES DE HISTORIAL DE PEDIDOS
+// ========================================
+
+/**
+ * Obtiene historial de un pedido
+ * Endpoint: GET /api/v1/pedidos/{pedido_id}/historial
+ */
+export const getPedidoHistorial = async (pedidoId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/pedidos/${encodeURIComponent(pedidoId)}/historial`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading historial:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar historial del pedido');
+  }
+};
+
+/**
+ * Obtiene un pedido por ID
+ * Endpoint: GET /api/v1/pedidos/{pedido_id}
+ */
+export const getPedidoById = async (pedidoId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/pedidos/${encodeURIComponent(pedidoId)}`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading pedido by id:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar el pedido');
+  }
+};
+
+/**
+ * Lista entregas por NIT con filtro opcional por estado
+ * Endpoint: GET /api/v1/entregas/{nit}?estado=programada
+ */
+export const getEntregasByNit = async (
+  nit: string,
+  options?: { estado?: 'programada' | 'en_ruta' | 'entregada' | 'devuelta'; page?: number; limit?: number }
+) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/entregas/${encodeURIComponent(nit)}`, {
+      params: {
+        estado: options?.estado,
+        pagina: options?.page || 1,
+        por_pagina: options?.limit || 25,
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading entregas:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar entregas');
+  }
+};
+
+/**
+ * Obtiene tracking de una entrega
+ * Endpoint: GET /api/v1/entregas/{entrega_id}/tracking
+ */
+export const getEntregaTracking = async (entregaId: string) => {
+  try {
+    const response = await pedidosApi.get(`/api/v1/entregas/${encodeURIComponent(entregaId)}/tracking`);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PedidosAPI] Error loading tracking:', error);
+    throw new Error(error.response?.data?.detail || 'Error al cargar tracking de entrega');
+  }
+};
