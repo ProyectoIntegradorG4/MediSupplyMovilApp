@@ -1,0 +1,49 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "no": "No",
+    "yes": "Sí"
+  },
+  "profile": {
+    "title": "Perfil",
+    "personalInfo": "Información Personal",
+    "settings": "Configuración",
+    "userId": "ID de Usuario",
+    "email": "Email",
+    "fullName": "Nombre Completo",
+    "roles": "Roles",
+    "noRole": "Sin rol",
+    "notifications": "Notificaciones",
+    "notificationsDescription": "Gestiona tus preferencias de notificaciones",
+    "security": "Seguridad",
+    "securityDescription": "Cambia tu contraseña y configura la seguridad",
+    "preferences": "Preferencias",
+    "preferencesDescription": "Personaliza la aplicación según tus necesidades",
+    "language": "Idioma",
+    "languageDescription": "Selecciona el idioma de la aplicación",
+    "logout": "Cerrar Sesión",
+    "user": "Usuario"
+  },
+  "language": {
+    "spanish": "Español",
+    "english": "Inglés",
+    "selectLanguage": "Seleccionar Idioma"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "clients": "Clientes",
+    "orders": "Pedidos",
+    "deliveries": "Entregas",
+    "routes": "Rutas",
+    "profile": "Perfil"
+  }
+}
+
