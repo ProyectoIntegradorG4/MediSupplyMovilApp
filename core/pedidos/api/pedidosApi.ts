@@ -9,6 +9,7 @@
 
 import { CONFIG } from '@/constants/config';
 import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
+import { formatTime, formatDate } from '@/helpers/i18n/formatting';
 import axios from 'axios';
 import {
   Pedido,
@@ -326,12 +327,12 @@ export const getPedidosByClienteMock = async (
       type: 'Hospital' as any,
       status: p.estado as any,
       refNumber: p.numero_pedido,
-      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      time: formatTime(p.fecha_creacion),
       phone: '',
       doctor: '',
       amount: formatAmount(p.monto_total),
       units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
-      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      creationDate: formatDate(p.fecha_creacion),
       deliveryDate: '',
       items: (p.detalles || []).map((d: any) => ({
         productoId: d.producto_id,
@@ -392,12 +393,12 @@ export const getPedidosByGerenteMock = async (
       type: 'Hospital' as any,
       status: p.estado as any,
       refNumber: p.numero_pedido,
-      time: new Date(p.fecha_creacion).toLocaleTimeString(),
+      time: formatTime(p.fecha_creacion),
       phone: '',
       doctor: '',
       amount: formatAmount(p.monto_total),
       units: String(p.detalles?.reduce((sum: number, d: any) => sum + d.cantidad_solicitada, 0) || 0),
-      creationDate: new Date(p.fecha_creacion).toLocaleDateString('es-CO'),
+      creationDate: formatDate(p.fecha_creacion),
       deliveryDate: '',
       gerente_id: gerenteId,
       items: (p.detalles || []).map((d: any) => ({

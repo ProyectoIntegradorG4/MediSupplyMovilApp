@@ -5,6 +5,7 @@ import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import { getPedidoById, getPedidoHistorial } from '@/core/pedidos/api/pedidosApi';
 import StatusBadge from '@/presentation/theme/components/StatusBadge';
+import { formatDateTime, formatCurrency, formatNumber } from '@/helpers/i18n/formatting';
 
 export default function PedidoDetailScreen() {
   const { pedidoId } = useLocalSearchParams<{ pedidoId: string }>();
@@ -68,8 +69,8 @@ export default function PedidoDetailScreen() {
       <View style={styles.sectionCard}>
         <ThemedText style={styles.sectionTitle}>Resumen</ThemedText>
         <Text style={[styles.itemText, { color: textColor }]}>NIT: {pedido.nit}</Text>
-        <Text style={[styles.itemText, { color: textColor }]}>Creado: {new Date(pedido.fecha_creacion).toLocaleString()}</Text>
-        <Text style={[styles.itemText, { color: textColor }]}>Total: ${pedido.monto_total?.toLocaleString('es-CO')}</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>Creado: {formatDateTime(pedido.fecha_creacion)}</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>Total: {formatCurrency(pedido.monto_total || 0)}</Text>
         <Text style={[styles.itemText, { color: textColor }]}>Unidades: {totalUnidades}</Text>
       </View>
 
@@ -79,7 +80,7 @@ export default function PedidoDetailScreen() {
           <View key={d.detalle_id} style={styles.itemRow}>
             <Text style={[styles.itemName, { color: textColor }]} numberOfLines={2}>{d.nombre_producto}</Text>
             <Text style={[styles.itemMeta, { color: textColor }]}>
-              {d.cantidad_solicitada} x ${d.precio_unitario?.toLocaleString('es-CO')} = ${d.subtotal?.toLocaleString('es-CO')}
+              {d.cantidad_solicitada} x {formatCurrency(d.precio_unitario || 0)} = {formatCurrency(d.subtotal || 0)}
             </Text>
           </View>
         ))}
@@ -98,7 +99,7 @@ export default function PedidoDetailScreen() {
                   {h.estado_anterior} → {h.estado_nuevo}
                 </Text>
                 <Text style={[styles.historyTime, { color: textColor }]}>
-                  {new Date(h.fecha_cambio).toLocaleString()}
+                  {formatDateTime(h.fecha_cambio)}
                 </Text>
                 {!!h.comentario && (
                   <Text style={[styles.historyComment, { color: textColor }]}>{h.comentario}</Text>

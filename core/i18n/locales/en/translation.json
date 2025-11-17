@@ -1,0 +1,49 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "no": "No",
+    "yes": "Yes"
+  },
+  "profile": {
+    "title": "Profile",
+    "personalInfo": "Personal Information",
+    "settings": "Settings",
+    "userId": "User ID",
+    "email": "Email",
+    "fullName": "Full Name",
+    "roles": "Roles",
+    "noRole": "No role",
+    "notifications": "Notifications",
+    "notificationsDescription": "Manage your notification preferences",
+    "security": "Security",
+    "securityDescription": "Change your password and configure security",
+    "preferences": "Preferences",
+    "preferencesDescription": "Customize the application according to your needs",
+    "language": "Language",
+    "languageDescription": "Select the application language",
+    "logout": "Log Out",
+    "user": "User"
+  },
+  "language": {
+    "spanish": "Spanish",
+    "english": "English",
+    "selectLanguage": "Select Language"
+  },
+  "navigation": {
+    "home": "Home",
+    "clients": "Clients",
+    "orders": "Orders",
+    "deliveries": "Deliveries",
+    "routes": "Routes",
+    "profile": "Profile"
+  }
+}
+

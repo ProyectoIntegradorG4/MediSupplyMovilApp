@@ -5,6 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface NavItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -63,6 +64,7 @@ export default function BottomNav({ style, lightColor, darkColor, ...otherProps 
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     'background'
@@ -92,25 +94,25 @@ export default function BottomNav({ style, lightColor, darkColor, ...otherProps 
           <>
             <NavItem
               icon="people"
-              label="Clientes"
+              label={t('navigation.clients')}
               active={pathname.includes('/clientes')}
               onPress={() => router.push('/(products-app)/(clientes)')}
             />
             <NavItem
               icon="cart"
-              label="Pedidos"
+              label={t('navigation.orders')}
               active={pathname.includes('/pedidos')}
               onPress={() => router.push('/(products-app)/(pedidos)')}
             />
             <NavItem
               icon="map"
-              label="Rutas"
+              label={t('navigation.routes')}
               active={pathname.includes('/rutas')}
               onPress={() => router.push('/(products-app)/(rutas)' as any)}
             />
             <NavItem
               icon="person"
-              label="Perfil"
+              label={t('navigation.profile')}
               active={pathname.includes('/perfil')}
               onPress={() => router.push('/(products-app)/(perfil)' as any)}
             />
@@ -122,19 +124,19 @@ export default function BottomNav({ style, lightColor, darkColor, ...otherProps 
           <>
             <NavItem
               icon="cube"
-              label="Entregas"
+              label={t('navigation.deliveries')}
               active={pathname.includes('/entregas')}
               onPress={() => router.push('/(products-app)/(entregas)' as any)}
             />
             <NavItem
               icon="cart"
-              label="Pedidos"
+              label={t('navigation.orders')}
               active={pathname.includes('/pedidos')}
               onPress={() => router.push('/(products-app)/(pedidos)')}
             />
             <NavItem
               icon="person"
-              label="Perfil"
+              label={t('navigation.profile')}
               active={pathname.includes('/perfil')}
               onPress={() => router.push('/(products-app)/(perfil)' as any)}
             />
@@ -146,13 +148,13 @@ export default function BottomNav({ style, lightColor, darkColor, ...otherProps 
           <>
             <NavItem
               icon="home"
-              label="Inicio"
+              label={t('navigation.home')}
               active={pathname.includes('/home')}
               onPress={() => router.push('/(products-app)/(home)')}
             />
             <NavItem
               icon="person"
-              label="Perfil"
+              label={t('navigation.profile')}
               active={pathname.includes('/perfil')}
               onPress={() => router.push('/(products-app)/(perfil)' as any)}
             />

@@ -3,6 +3,7 @@ import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { getEntregasByNit } from '@/core/pedidos/api/pedidosApi';
+import { formatDateTime } from '@/helpers/i18n/formatting';
 
 const EntregasScreen = () => {
   const { user } = useAuthStore();
@@ -133,17 +134,17 @@ const EntregasScreen = () => {
                   </View>
                   {item.fecha_hora_programada && (
                     <ThemedText style={styles.featureDescription}>
-                      📅 Programada: {new Date(item.fecha_hora_programada).toLocaleString('es-CO')}
+                      📅 Programada: {formatDateTime(item.fecha_hora_programada)}
                     </ThemedText>
                   )}
                   {item.fecha_hora_estimada_llegada && (
                     <ThemedText style={styles.featureDescription}>
-                      ⏱️ ETA: {new Date(item.fecha_hora_estimada_llegada).toLocaleString('es-CO')}
+                      ⏱️ ETA: {formatDateTime(item.fecha_hora_estimada_llegada)}
                     </ThemedText>
                   )}
                   {item.fecha_hora_entrega_real && (
                     <ThemedText style={styles.featureDescription}>
-                      ✅ Entregada: {new Date(item.fecha_hora_entrega_real).toLocaleString('es-CO')}
+                      ✅ Entregada: {formatDateTime(item.fecha_hora_entrega_real)}
                     </ThemedText>
                   )}
                   {item.placa_vehiculo && (

@@ -150,9 +150,11 @@ export const calculatePedidoTotal = (items: PedidoItem[]): number => {
 
 /**
  * Formatea el monto como string para mostrar
+ * Usa el idioma actual de la aplicación
  */
 export const formatAmount = (amount: number): string => {
-  return `$${amount.toLocaleString('es-CO')}`;
+  const { formatCurrency } = require('@/helpers/i18n/formatting');
+  return formatCurrency(amount);
 };
 
 /**
