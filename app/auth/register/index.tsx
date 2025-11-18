@@ -22,7 +22,8 @@ const RegisterScreen = () => {
   const backgroundColor = useThemeColor({}, 'background');
   
   // Log de configuración para debugging
-  console.log('🔧 CONFIG.API.BASE_URL:', CONFIG.API.BASE_URL);
+  console.log('🔧 CONFIG.API.GATEWAY_URL:', CONFIG.API.GATEWAY_URL);
+  console.log('🔧 CONFIG.API.BASE_URL (deprecated):', CONFIG.API.BASE_URL);
 
   const [form, setForm] = useState({
     username: '',
@@ -76,7 +77,7 @@ const RegisterScreen = () => {
       const apiData = mapFormToApiData(form);
       
       console.log('=== ENVIANDO REGISTRO A API ===');
-      console.log('🌐 URL de la API:', CONFIG.API.BASE_URL);
+      console.log('🌐 Gateway URL:', CONFIG.API.GATEWAY_URL);
       console.log('📋 Datos a enviar:', {
         ...apiData,
         password: '***' // No logear la contraseña

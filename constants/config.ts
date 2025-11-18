@@ -38,17 +38,25 @@ export const CONFIG = {
 
 /**
  * URLs de fallback para Android (diferentes configuraciones de red)
+ * Incluyen puerto 80 para el API Gateway
  */
 const ANDROID_FALLBACK_URLS = [
-    'http://10.0.2.2',      // Emulador Android estándar
-    'http://192.168.5.107',    // IP real de la máquina
-    'http://localhost',      // Localhost (solo para web)
-    'http://127.0.0.1'       // IP loopback (solo para web)
+    'http://10.0.2.2:80',      // Emulador Android estándar (puerto 80)
+    'http://192.168.5.107:80', // IP real de la máquina (puerto 80)
+    'http://localhost:80',     // Localhost (solo para web)
+    'http://127.0.0.1:80'      // IP loopback (solo para web)
 ];
 
 /**
  * Obtiene la URL del API Gateway (NGINX) según la plataforma y entorno
  * El API Gateway enruta a todos los servicios desde un único punto de entrada (puerto 80)
+ * 
+ * IMPORTANTE: Todas las peticiones deben pasar por el gateway en puerto 80
+ * El gateway enruta según el path:
+ *   - /api/v1/auth/*       → auth-service:8004
+ *   - /api/v1/users/*      → user-service:8001
+ *   - /api/v1/validate/*   → nit-validation-service:8002
+ *   - /api/v1/audits/*     → audit-service:8003
  */
 function getGatewayUrl(): string {
     const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
@@ -57,19 +65,22 @@ function getGatewayUrl(): string {
         return process.env.EXPO_PUBLIC_GATEWAY_URL || 'https://api.medisupply.com';
     }
 
-    // Si hay URL específica en variables de entorno, usarla
+    // Si hay URL específica en variables de entorno, usarla (debe incluir puerto si es necesario)
     if (process.env.EXPO_PUBLIC_GATEWAY_URL) {
         return process.env.EXPO_PUBLIC_GATEWAY_URL;
     }
 
-    // Desarrollo: usar URL específica por plataforma para el API Gateway
+    // Desarrollo: usar URL específica por plataforma para el API Gateway (puerto 80)
     switch (Platform.OS) {
         case 'ios':
-            return process.env.EXPO_PUBLIC_GATEWAY_URL_IOS || 'http://192.168.5.107';
+            // iOS Simulator puede usar la IP de la máquina directamente
+            return process.env.EXPO_PUBLIC_GATEWAY_URL_IOS || 'http://192.168.5.107:80';
         case 'android':
-            return process.env.EXPO_PUBLIC_GATEWAY_URL_ANDROID || 'http://10.0.2.2';
+            // Android Emulator usa 10.0.2.2 para acceder al host
+            // Android físico usa la IP de la máquina en la misma red
+            return process.env.EXPO_PUBLIC_GATEWAY_URL_ANDROID || 'http://10.0.2.2:80';
         default:
-            return 'http://localhost';
+            return 'http://localhost:80';
     }
 }
 
@@ -134,7 +145,8 @@ export const logConfig = () => {
     console.log('=== CONFIGURACIÓN DE LA APP ===');
     console.log('🚀 Entorno:', CONFIG.STAGE);
     console.log('📱 Plataforma:', Platform.OS);
-    console.log('🌐 API URL:', CONFIG.API.BASE_URL);
+    console.log('🌐 Gateway URL:', CONFIG.API.GATEWAY_URL);
+    console.log('🌐 API URL (deprecated):', CONFIG.API.BASE_URL);
     console.log('🐛 Debug:', CONFIG.DEBUG);
     console.log('================================');
 };
