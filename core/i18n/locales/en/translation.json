@@ -10,7 +10,8 @@
     "error": "Error",
     "success": "Success",
     "no": "No",
-    "yes": "Yes"
+    "yes": "Yes",
+    "retry": "Retry"
   },
   "profile": {
     "title": "Profile",
@@ -44,6 +45,73 @@
     "deliveries": "Deliveries",
     "routes": "Routes",
     "profile": "Profile"
+  },
+  "routes": {
+    "title": "Visit Route",
+    "accountManager": "Account Manager",
+    "dateLabel": "Route date",
+    "loadingRoute": "Loading route...",
+    "errorTitle": "Error",
+    "restrictedAccess": "Restricted Access",
+    "restrictedMessage": "This feature is exclusive for Account Managers",
+    "noVisitsTitle": "No scheduled visits",
+    "noVisitsMessage": "You have no assigned visits for this date.",
+    "summaryTitle": "Route summary",
+    "visits": "Visits",
+    "totalTime": "Total time",
+    "distance": "Distance",
+    "schedule": "Schedule",
+    "scheduledVisits": "Scheduled visits",
+    "optimizedRoute": "Optimized route - Version {{version}}",
+    "origin": "Origin: {{origin}}",
+    "priorities": {
+      "high": "HIGH",
+      "medium": "MEDIUM",
+      "low": "LOW",
+      "label": "Priority"
+    },
+    "duration": "Duration",
+    "fromPrevious": "from previous",
+    "originTypes": {
+      "planned": "planned",
+      "recalculated": "recalculated",
+      "manual": "manual"
+    }
+  },
+  "clients": {
+    "title": "My Clients",
+    "searchPlaceholder": "Search client, city, contact...",
+    "loadingClients": "Loading clients...",
+    "resultsCount": {
+      "client": "client found",
+      "clients": "clients found",
+      "of": "of",
+      "total": "total"
+    },
+    "empty": {
+      "title": "No clients found",
+      "withSearch": "Try a different search",
+      "withoutSearch": "You have no assigned clients"
+    },
+    "error": {
+      "loadFailed": "Failed to load clients"
+    },
+    "actions": {
+      "registerVisit": "Register Visit"
+    },
+    "card": {
+      "updated": "Updated",
+      "noAddress": "No address",
+      "noDate": "No date"
+    },
+    "institutionTypes": {
+      "Hospital": "Hospital",
+      "Clínica": "Clinic",
+      "IPS": "IPS",
+      "EPS": "HMO",
+      "Laboratorio Clínico": "Clinical Laboratory",
+      "Centro de Salud": "Health Center"
+    }
   }
 }
 

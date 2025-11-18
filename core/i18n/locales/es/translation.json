@@ -10,7 +10,8 @@
     "error": "Error",
     "success": "Éxito",
     "no": "No",
-    "yes": "Sí"
+    "yes": "Sí",
+    "retry": "Reintentar"
   },
   "profile": {
     "title": "Perfil",
@@ -44,6 +45,73 @@
     "deliveries": "Entregas",
     "routes": "Rutas",
     "profile": "Perfil"
+  },
+  "routes": {
+    "title": "Ruta de Visitas",
+    "accountManager": "Gerente de Cuenta",
+    "dateLabel": "Fecha de la ruta",
+    "loadingRoute": "Cargando ruta...",
+    "errorTitle": "Error",
+    "restrictedAccess": "Acceso Restringido",
+    "restrictedMessage": "Esta funcionalidad es exclusiva para Gerentes de Cuenta",
+    "noVisitsTitle": "No hay visitas programadas",
+    "noVisitsMessage": "No tienes visitas asignadas para esta fecha.",
+    "summaryTitle": "Resumen de la ruta",
+    "visits": "Visitas",
+    "totalTime": "Tiempo total",
+    "distance": "Distancia",
+    "schedule": "Horario",
+    "scheduledVisits": "Visitas programadas",
+    "optimizedRoute": "Ruta optimizada - Versión {{version}}",
+    "origin": "Origen: {{origin}}",
+    "priorities": {
+      "high": "ALTA",
+      "medium": "MEDIA",
+      "low": "BAJA",
+      "label": "Prioridad"
+    },
+    "duration": "Duración",
+    "fromPrevious": "desde anterior",
+    "originTypes": {
+      "planned": "planificada",
+      "recalculated": "recalculada",
+      "manual": "manual"
+    }
+  },
+  "clients": {
+    "title": "Mis Clientes",
+    "searchPlaceholder": "Buscar cliente, ciudad, contacto...",
+    "loadingClients": "Cargando clientes...",
+    "resultsCount": {
+      "client": "cliente encontrado",
+      "clients": "clientes encontrados",
+      "of": "de",
+      "total": "total"
+    },
+    "empty": {
+      "title": "No se encontraron clientes",
+      "withSearch": "Intenta con otra búsqueda",
+      "withoutSearch": "No tienes clientes asignados"
+    },
+    "error": {
+      "loadFailed": "Error al cargar clientes"
+    },
+    "actions": {
+      "registerVisit": "Registrar Visita"
+    },
+    "card": {
+      "updated": "Actualizado",
+      "noAddress": "Sin dirección",
+      "noDate": "Sin fecha"
+    },
+    "institutionTypes": {
+      "Hospital": "Hospital",
+      "Clínica": "Clínica",
+      "IPS": "IPS",
+      "EPS": "EPS",
+      "Laboratorio Clínico": "Laboratorio Clínico",
+      "Centro de Salud": "Centro de Salud"
+    }
   }
 }
 
