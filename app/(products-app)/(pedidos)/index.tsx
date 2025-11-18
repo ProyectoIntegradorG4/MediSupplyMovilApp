@@ -26,9 +26,11 @@ import { getClientesPorNit } from '@/core/clientes/api/clientesApi';
 import { fetchClientes } from '@/core/clientes/actions/clientes-actions';
 import { Pedido } from '@/core/pedidos/interface/pedido';
 import { Cliente } from '@/core/clientes/interface/cliente';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 const PedidosScreen = () => {
   const { user, hasRole } = useAuthStore();
+  const { t } = useTranslation();
   const router = useRouter();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
@@ -194,7 +196,7 @@ const PedidosScreen = () => {
       }
     } catch (error) {
       console.error('❌ [PedidosScreen] Error loading pedidos:', error);
-      Alert.alert('Error', 'No se pudieron cargar los pedidos');
+      Alert.alert(t('common.error'), t('orders.newOrder.errors.loadProducts'));
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -238,7 +240,7 @@ const PedidosScreen = () => {
     return (
       <View style={[styles.container, styles.centerContainer]}>
         <ActivityIndicator size="large" color={primaryColor} />
-        <ThemedText style={styles.loadingText}>Cargando pedidos...</ThemedText>
+        <ThemedText style={styles.loadingText}>{t('orders.loading')}</ThemedText>
       </View>
     );
   }
@@ -248,7 +250,7 @@ const PedidosScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <ThemedText style={styles.title}>Mis Pedidos</ThemedText>
+          <ThemedText style={styles.title}>{t('orders.title')}</ThemedText>
           <ThemedText style={styles.subtitle}>
             {user?.fullName || user?.email}
           </ThemedText>
@@ -264,22 +266,22 @@ const PedidosScreen = () => {
           ]}
         >
           <Ionicons name="add-circle" size={24} color="white" />
-          <ThemedText style={styles.newOrderText}>Nuevo</ThemedText>
+          <ThemedText style={styles.newOrderText}>{t('orders.new')}</ThemedText>
         </Pressable>
       </View>
       
       {/* Filtro de clientes para gerente_cuenta */}
       {isGerenteCuenta && clientes.length > 0 && (
         <View style={styles.filterContainer}>
-          <ThemedText style={styles.filterLabel}>Filtrar por cliente:</ThemedText>
+          <ThemedText style={styles.filterLabel}>{t('orders.filters.byClient')}</ThemedText>
           <TouchableOpacity
             style={[styles.pickerButton, { borderColor: primaryColor }]}
             onPress={() => setShowClientePicker(!showClientePicker)}
           >
             <ThemedText style={styles.pickerButtonText}>
               {selectedClienteNit 
-                ? clientes.find(c => c.nit === selectedClienteNit)?.nombre_comercial || 'Seleccionar cliente'
-                : 'Todos los clientes'}
+                ? clientes.find(c => c.nit === selectedClienteNit)?.nombre_comercial || t('orders.filters.selectClient')
+                : t('orders.filters.allClients')}
             </ThemedText>
             <Ionicons 
               name={showClientePicker ? 'chevron-up' : 'chevron-down'} 
@@ -301,7 +303,7 @@ const PedidosScreen = () => {
                     setShowClientePicker(false);
                   }}
                 >
-                  <ThemedText style={styles.pickerItemText}>Todos los clientes</ThemedText>
+                  <ThemedText style={styles.pickerItemText}>{t('orders.filters.allClients')}</ThemedText>
                 </TouchableOpacity>
                 {clientes.map((cliente) => (
                   <TouchableOpacity
@@ -332,17 +334,17 @@ const PedidosScreen = () => {
       {/* Filtro de sedes para usuario_institucional */}
       {isUsuarioInstitucional && clientes.length > 0 && (
         <View style={styles.filterContainer}>
-          <ThemedText style={styles.filterLabel}>Filtrar por sede:</ThemedText>
+          <ThemedText style={styles.filterLabel}>{t('orders.filters.bySite')}</ThemedText>
           <TouchableOpacity
             style={[styles.pickerButton, { borderColor: primaryColor }]}
             onPress={() => setShowClientePicker(!showClientePicker)}
           >
             <ThemedText style={styles.pickerButtonText}>
               {selectedClienteId
-                ? clientes.find(c => c.cliente_id === selectedClienteId)?.nombre_comercial || 'Seleccionar sede'
+                ? clientes.find(c => c.cliente_id === selectedClienteId)?.nombre_comercial || t('orders.filters.selectSite')
                 : clientes.length === 1
                 ? clientes[0].nombre_comercial
-                : 'Todas las sedes'}
+                : t('orders.filters.allSites')}
             </ThemedText>
             <Ionicons 
               name={showClientePicker ? 'chevron-up' : 'chevron-down'} 
@@ -365,7 +367,7 @@ const PedidosScreen = () => {
                     loadPedidos();
                   }}
                 >
-                  <ThemedText style={styles.pickerItemText}>Todas las sedes</ThemedText>
+                  <ThemedText style={styles.pickerItemText}>{t('orders.filters.allSites')}</ThemedText>
                 </TouchableOpacity>
                 {clientes.map((cliente) => (
                   <TouchableOpacity
@@ -398,11 +400,11 @@ const PedidosScreen = () => {
       {pedidos.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Ionicons name="cart-outline" size={64} color={textColor + '40'} />
-          <ThemedText style={styles.emptyTitle}>No hay pedidos</ThemedText>
+          <ThemedText style={styles.emptyTitle}>{t('orders.noOrders')}</ThemedText>
           <ThemedText style={styles.emptyText}>
             {isUsuarioInstitucional
-              ? 'Crea tu primer pedido para comenzar'
-              : 'Tus clientes aún no han creado pedidos'}
+              ? t('orders.emptyMessage.institutional')
+              : t('orders.emptyMessage.manager')}
           </ThemedText>
           <Pressable
             onPress={() => setIsModalOpen(true)}
@@ -415,7 +417,7 @@ const PedidosScreen = () => {
             ]}
           >
             <ThemedText style={styles.emptyButtonText}>
-              Crear Primer Pedido
+              {t('orders.createFirst')}
             </ThemedText>
           </Pressable>
         </View>

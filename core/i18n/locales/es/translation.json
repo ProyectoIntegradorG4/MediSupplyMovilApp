@@ -112,6 +112,197 @@
       "Laboratorio Clínico": "Laboratorio Clínico",
       "Centro de Salud": "Centro de Salud"
     }
+  },
+  "orders": {
+    "title": "Mis Pedidos",
+    "new": "Nuevo",
+    "loading": "Cargando pedidos...",
+    "loadingOrder": "Cargando pedido...",
+    "noOrders": "No hay pedidos",
+    "createFirst": "Crear Primer Pedido",
+    "emptyMessage": {
+      "institutional": "Crea tu primer pedido para comenzar",
+      "manager": "Tus clientes aún no han creado pedidos"
+    },
+    "filters": {
+      "byClient": "Filtrar por cliente:",
+      "bySite": "Filtrar por sede:",
+      "selectClient": "Seleccionar cliente",
+      "selectSite": "Seleccionar sede",
+      "allClients": "Todos los clientes",
+      "allSites": "Todas las sedes"
+    },
+    "card": {
+      "creationDate": "Fecha Creación",
+      "deliveryDate": "Fecha Entrega"
+    },
+    "detail": {
+      "order": "Pedido",
+      "notFound": "No se encontró el pedido.",
+      "summary": "Resumen",
+      "nit": "NIT:",
+      "created": "Creado:",
+      "total": "Total:",
+      "units": "Unidades:",
+      "products": "Productos",
+      "statusHistory": "Historial de Estado",
+      "noChanges": "No hay cambios registrados."
+    },
+    "status": {
+      "pendiente": "Pendiente",
+      "enviado": "Enviado",
+      "entregado": "Entregado",
+      "cancelado": "Cancelado"
+    },
+    "newOrder": {
+      "title": "Nuevo Pedido",
+      "step1": "Paso 1: Seleccionar Cliente",
+      "step2": "Paso 2: Seleccionar Productos",
+      "step3": "Paso 3: Revisar Pedido",
+      "confirming": "Confirmando...",
+      "loadingProducts": "Cargando productos...",
+      "addProducts": "Agregar Productos",
+      "cartItems": "Productos en el carrito",
+      "creatingOrder": "Creando pedido...",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "confirmOrder": "Confirmar Pedido",
+      "validation": {
+        "selectClient": "Debes seleccionar un cliente",
+        "addProduct": "Debes agregar al menos un producto",
+        "missingData": "Faltan datos para crear el pedido"
+      },
+      "success": {
+        "orderCreated": "Pedido Creado",
+        "orderCreatedMessage": "Pedido {{refNumber}} creado exitosamente",
+        "productAdded": "Producto agregado al carrito"
+      },
+      "errors": {
+        "loadClients": "No se pudieron cargar los clientes",
+        "loadProducts": "No se pudieron cargar los productos",
+        "createOrder": "No se pudo crear el pedido",
+        "productNotFound": "Producto no encontrado",
+        "addToCart": "No se pudo agregar el producto al carrito",
+        "insufficientStock": "Stock Insuficiente",
+        "insufficientStockMessage": "Stock insuficiente. Disponible: {{available}} unidades",
+        "insufficientStockCart": "Stock insuficiente. Disponible: {{available}} unidades. Ya tienes {{current}} en el carrito."
+      }
+    }
+  },
+  "deliveries": {
+    "title": "Estado de Entregas",
+    "welcome": "Bienvenido, {{name}}",
+    "role": "Rol:",
+    "noRole": "Sin rol",
+    "loading": "Cargando entregas...",
+    "noDeliveries": "No hay entregas disponibles",
+    "order": "Pedido",
+    "labels": {
+      "scheduled": "Programada:",
+      "eta": "ETA:",
+      "delivered": "Entregada:",
+      "vehicle": "Vehículo:"
+    },
+    "status": {
+      "programada": "PROGRAMADA",
+      "en_ruta": "EN RUTA",
+      "entregada": "ENTREGADA",
+      "devuelta": "DEVUELTA",
+      "unknown": "DESCONOCIDO"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Ingresar",
+      "subtitle": "Por favor ingrese para continuar",
+      "emailPlaceholder": "Correo electrónico",
+      "passwordPlaceholder": "Contraseña",
+      "loginButton": "Ingresar",
+      "noAccount": "¿No tienes cuenta?",
+      "createAccount": "Crear cuenta",
+      "validation": {
+        "passwordRequired": "La contraseña es obligatoria",
+        "passwordEmpty": "La contraseña no puede estar vacía"
+      },
+      "errors": {
+        "incompleteForm": "Formulario incompleto",
+        "incompleteFormMessage": "Por favor corrige los errores marcados en el formulario",
+        "understood": "Entendido",
+        "invalidCredentials": "Usuario o contraseña no son correctos"
+      }
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "subtitle": "Por favor crea una cuenta para continuar",
+      "fullNamePlaceholder": "Nombre completo",
+      "emailPlaceholder": "Correo electrónico",
+      "nitPlaceholder": "NIT - Número Identificación Tributario",
+      "passwordPlaceholder": "Contraseña",
+      "registerButton": "Crear cuenta",
+      "creatingAccount": "Creando cuenta...",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "login": "Ingresar",
+      "success": {
+        "title": "🎉 Registro exitoso",
+        "message": "¡Bienvenido {{username}}!\nTu cuenta institucional ha sido creada con el NIT {{nit}}",
+        "continue": "Continuar"
+      },
+      "validation": {
+        "incompleteForm": "Formulario incompleto",
+        "incompleteFormMessage": "Por favor corrige los errores marcados en el formulario",
+        "understood": "Entendido"
+      },
+      "errors": {
+        "registrationError": "Error de registro",
+        "dataValidation": "Validación de datos",
+        "dataValidationMessage": "Los datos ingresados no cumplen con las reglas de negocio",
+        "invalidNit": "NIT no válido",
+        "invalidNitMessage": "El NIT ingresado no está autorizado para registro",
+        "userExists": "Usuario existente",
+        "userExistsMessage": "Ya existe una cuenta con este correo electrónico",
+        "validationErrors": "Errores de validación",
+        "validationErrorsMessage": "Por favor corrige los errores marcados en el formulario",
+        "genericError": "Hubo un problema al crear tu cuenta. Por favor intenta nuevamente.",
+        "retry": "Reintentar",
+        "connectionError": "Error de conexión",
+        "networkError": "No se pudo conectar al servidor. Verifica tu conexión a internet.",
+        "timeoutError": "La conexión tardó demasiado. Por favor intenta nuevamente.",
+        "unexpectedError": "Ocurrió un problema inesperado. Por favor intenta nuevamente."
+      }
+    }
+  },
+  "validation": {
+    "email": {
+      "required": "El correo electrónico es obligatorio",
+      "invalid": "Por favor ingresa un correo electrónico válido",
+      "valid": "Correo electrónico válido"
+    },
+    "nit": {
+      "required": "El NIT es obligatorio",
+      "onlyNumbers": "El NIT solo debe contener números",
+      "length": "El NIT debe tener entre 9 y 10 dígitos",
+      "valid": "NIT válido"
+    },
+    "password": {
+      "required": "La contraseña es obligatoria",
+      "minLength": "La contraseña debe tener al menos 8 caracteres",
+      "mustInclude": "Debe incluir: {{missing}}",
+      "acceptable": "Contraseña aceptable",
+      "strong": "Contraseña segura",
+      "requirements": {
+        "uppercase": "mayúsculas",
+        "lowercase": "minúsculas",
+        "numbers": "números",
+        "special": "símbolos especiales"
+      }
+    },
+    "fullName": {
+      "required": "El nombre completo es obligatorio",
+      "minLength": "El nombre debe tener al menos 3 caracteres",
+      "nameAndSurname": "Ingresa nombre y apellido",
+      "onlyLetters": "El nombre solo puede contener letras",
+      "valid": "Nombre válido"
+    }
   }
 }
 

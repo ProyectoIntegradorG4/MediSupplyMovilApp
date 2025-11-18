@@ -6,9 +6,11 @@ import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import { getPedidoById, getPedidoHistorial } from '@/core/pedidos/api/pedidosApi';
 import StatusBadge from '@/presentation/theme/components/StatusBadge';
 import { formatDateTime, formatCurrency, formatNumber } from '@/helpers/i18n/formatting';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 export default function PedidoDetailScreen() {
   const { pedidoId } = useLocalSearchParams<{ pedidoId: string }>();
+  const { t } = useTranslation();
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
   const bg = useThemeColor({}, 'background');
@@ -46,7 +48,7 @@ export default function PedidoDetailScreen() {
     return (
       <View style={[styles.center, { backgroundColor: bg }]}>
         <ActivityIndicator size="large" color={primaryColor} />
-        <ThemedText>Cargando pedido...</ThemedText>
+        <ThemedText>{t('orders.loadingOrder')}</ThemedText>
       </View>
     );
   }
@@ -54,7 +56,7 @@ export default function PedidoDetailScreen() {
   if (!pedido) {
     return (
       <View style={[styles.center, { backgroundColor: bg }]}>
-        <ThemedText>No se encontró el pedido.</ThemedText>
+        <ThemedText>{t('orders.detail.notFound')}</ThemedText>
       </View>
     );
   }
@@ -62,20 +64,20 @@ export default function PedidoDetailScreen() {
   return (
     <ScrollView style={[styles.container, { backgroundColor: bg }]}>
       <View style={styles.header}>
-        <ThemedText style={styles.title}>Pedido {pedido.numero_pedido}</ThemedText>
+        <ThemedText style={styles.title}>{t('orders.detail.order')} {pedido.numero_pedido}</ThemedText>
         <StatusBadge status={pedido.estado} />
       </View>
 
       <View style={styles.sectionCard}>
-        <ThemedText style={styles.sectionTitle}>Resumen</ThemedText>
-        <Text style={[styles.itemText, { color: textColor }]}>NIT: {pedido.nit}</Text>
-        <Text style={[styles.itemText, { color: textColor }]}>Creado: {formatDateTime(pedido.fecha_creacion)}</Text>
-        <Text style={[styles.itemText, { color: textColor }]}>Total: {formatCurrency(pedido.monto_total || 0)}</Text>
-        <Text style={[styles.itemText, { color: textColor }]}>Unidades: {totalUnidades}</Text>
+        <ThemedText style={styles.sectionTitle}>{t('orders.detail.summary')}</ThemedText>
+        <Text style={[styles.itemText, { color: textColor }]}>{t('orders.detail.nit')} {pedido.nit}</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>{t('orders.detail.created')} {formatDateTime(pedido.fecha_creacion)}</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>{t('orders.detail.total')} {formatCurrency(pedido.monto_total || 0)}</Text>
+        <Text style={[styles.itemText, { color: textColor }]}>{t('orders.detail.units')} {totalUnidades}</Text>
       </View>
 
       <View style={styles.sectionCard}>
-        <ThemedText style={styles.sectionTitle}>Productos</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('orders.detail.products')}</ThemedText>
         {(pedido.detalles || []).map((d: any) => (
           <View key={d.detalle_id} style={styles.itemRow}>
             <Text style={[styles.itemName, { color: textColor }]} numberOfLines={2}>{d.nombre_producto}</Text>
@@ -87,9 +89,9 @@ export default function PedidoDetailScreen() {
       </View>
 
       <View style={styles.sectionCard}>
-        <ThemedText style={styles.sectionTitle}>Historial de Estado</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('orders.detail.statusHistory')}</ThemedText>
         {historial.length === 0 ? (
-          <ThemedText>No hay cambios registrados.</ThemedText>
+          <ThemedText>{t('orders.detail.noChanges')}</ThemedText>
         ) : (
           historial.map((h, idx) => (
             <View key={idx} style={styles.historyRow}>

@@ -17,9 +17,11 @@ import ThemedLink from '@/presentation/theme/components/ThemedLink';
 import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import ThemedTextInput from '@/presentation/theme/components/ThemedTextInput';
 import { useThemeColor } from '@/presentation/theme/hooks/useThemeColor';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 const LoginScreen = () => {
   const { login, getRoleBasedRoute } = useAuthStore();
+  const { t } = useTranslation();
 
   const { height } = useWindowDimensions();
   const backgroundColor = useThemeColor({}, 'background');
@@ -40,16 +42,16 @@ const LoginScreen = () => {
     const errors: Record<string, string> = {};
 
     // Validar email
-    const emailValidation = validateEmail(email);
+    const emailValidation = validateEmail(email, t);
     if (!emailValidation.isValid) {
       errors.email = emailValidation.message;
     }
 
     // Validar contraseña
     if (!password) {
-      errors.password = 'La contraseña es obligatoria';
+      errors.password = t('auth.login.validation.passwordRequired');
     } else if (password.length === 0) {
-      errors.password = 'La contraseña no puede estar vacía';
+      errors.password = t('auth.login.validation.passwordEmpty');
     }
 
     // Si hay errores, mostrarlos y detener
@@ -58,9 +60,9 @@ const LoginScreen = () => {
       setFieldErrors(errors);
 
       Alert.alert(
-        'Formulario incompleto',
-        'Por favor corrige los errores marcados en el formulario',
-        [{ text: 'Entendido', style: 'default' }]
+        t('auth.login.errors.incompleteForm'),
+        t('auth.login.errors.incompleteFormMessage'),
+        [{ text: t('auth.login.errors.understood'), style: 'default' }]
       );
       return;
     }
@@ -83,7 +85,7 @@ const LoginScreen = () => {
       console.log('❌ Login falló');
     }
 
-    Alert.alert('Error', 'Usuario o contraseña no son correctos');
+    Alert.alert(t('common.error'), t('auth.login.errors.invalidCredentials'));
   };
 
   return (
@@ -111,16 +113,16 @@ const LoginScreen = () => {
               marginBottom: 30,
             }}
           />
-          <ThemedText type="title">Ingresar</ThemedText>
+          <ThemedText type="title">{t('auth.login.title')}</ThemedText>
           <ThemedText style={{ color: 'grey' }}>
-            Por favor ingrese para continuar
+            {t('auth.login.subtitle')}
           </ThemedText>
         </View>
 
         {/* Email y Password */}
         <View style={{ marginTop: 20 }}>
           <ThemedTextInput
-            placeholder="Correo electrónico"
+            placeholder={t('auth.login.emailPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             icon="mail-outline"
@@ -136,7 +138,7 @@ const LoginScreen = () => {
           />
 
           <ThemedTextInput
-            placeholder="Contraseña"
+            placeholder={t('auth.login.passwordPlaceholder')}
             secureTextEntry
             autoCapitalize="none"
             icon="lock-closed-outline"
@@ -161,7 +163,7 @@ const LoginScreen = () => {
           onPress={onLogin}
           disabled={isPosting}
         >
-          Ingresar
+          {t('auth.login.loginButton')}
         </ThemedButton>
 
         {/* Spacer */}
@@ -175,9 +177,9 @@ const LoginScreen = () => {
             alignItems: 'center',
           }}
         >
-          <ThemedText>¿No tienes cuenta?</ThemedText>
+          <ThemedText>{t('auth.login.noAccount')}</ThemedText>
           <ThemedLink href="/auth/register" style={{ marginHorizontal: 5 }}>
-            Crear cuenta
+            {t('auth.login.createAccount')}
           </ThemedLink>
         </View>
       </ScrollView>

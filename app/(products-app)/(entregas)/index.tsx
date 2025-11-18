@@ -4,9 +4,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { getEntregasByNit } from '@/core/pedidos/api/pedidosApi';
 import { formatDateTime } from '@/helpers/i18n/formatting';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 const EntregasScreen = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [entregas, setEntregas] = useState<any[]>([]);
@@ -63,23 +65,23 @@ const EntregasScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <ThemedText style={styles.subtitle}>
-          Bienvenido, {user?.fullName || user?.email}
+          {t('deliveries.welcome', { name: user?.fullName || user?.email })}
         </ThemedText>
         <ThemedText style={styles.roleText}>
-          Rol: {user?.roles?.join(', ') || 'Sin rol'}
+          {t('deliveries.role')} {user?.roles?.join(', ') || t('deliveries.noRole')}
         </ThemedText>
       </View>
 
       <View style={styles.content}>
-        <ThemedText style={styles.sectionTitle}>Estado de Entregas</ThemedText>
+        <ThemedText style={styles.sectionTitle}>{t('deliveries.title')}</ThemedText>
         {isLoading ? (
           <View style={styles.loading}>
             <ActivityIndicator size="large" />
-            <ThemedText>Cargando entregas...</ThemedText>
+            <ThemedText>{t('deliveries.loading')}</ThemedText>
           </View>
         ) : entregas.length === 0 ? (
           <View style={styles.emptyState}>
-            <ThemedText style={styles.emptyText}>No hay entregas disponibles</ThemedText>
+            <ThemedText style={styles.emptyText}>{t('deliveries.noDeliveries')}</ThemedText>
           </View>
         ) : (
           <FlatList
@@ -118,13 +120,14 @@ const EntregasScreen = () => {
 
               const estadoColor = getEstadoColor(item.estado_entrega);
               const estadoIcon = getEstadoIcon(item.estado_entrega);
-              const estadoLabel = item.estado_entrega?.toUpperCase().replace('_', ' ') || 'DESCONOCIDO';
+              const estadoKey = item.estado_entrega?.toLowerCase() || 'unknown';
+              const estadoLabel = t(`deliveries.status.${estadoKey}`) || t('deliveries.status.unknown');
 
               return (
                 <View style={[styles.featureCard, { borderLeftColor: estadoColor }]}>
                   <View style={styles.cardHeader}>
                     <ThemedText style={styles.featureTitle}>
-                      {estadoIcon} Pedido {item.pedido_id?.slice(0, 8) || 'N/A'}…
+                      {estadoIcon} {t('deliveries.order')} {item.pedido_id?.slice(0, 8) || 'N/A'}…
                     </ThemedText>
                     <View style={[styles.estadoBadge, { backgroundColor: `${estadoColor}20` }]}>
                       <ThemedText style={[styles.estadoText, { color: estadoColor }]}>
@@ -134,22 +137,22 @@ const EntregasScreen = () => {
                   </View>
                   {item.fecha_hora_programada && (
                     <ThemedText style={styles.featureDescription}>
-                      📅 Programada: {formatDateTime(item.fecha_hora_programada)}
+                      📅 {t('deliveries.labels.scheduled')} {formatDateTime(item.fecha_hora_programada)}
                     </ThemedText>
                   )}
                   {item.fecha_hora_estimada_llegada && (
                     <ThemedText style={styles.featureDescription}>
-                      ⏱️ ETA: {formatDateTime(item.fecha_hora_estimada_llegada)}
+                      ⏱️ {t('deliveries.labels.eta')} {formatDateTime(item.fecha_hora_estimada_llegada)}
                     </ThemedText>
                   )}
                   {item.fecha_hora_entrega_real && (
                     <ThemedText style={styles.featureDescription}>
-                      ✅ Entregada: {formatDateTime(item.fecha_hora_entrega_real)}
+                      ✅ {t('deliveries.labels.delivered')} {formatDateTime(item.fecha_hora_entrega_real)}
                     </ThemedText>
                   )}
                   {item.placa_vehiculo && (
                     <ThemedText style={styles.featureDescription}>
-                      🚛 Vehículo: {item.placa_vehiculo}
+                      🚛 {t('deliveries.labels.vehicle')} {item.placa_vehiculo}
                     </ThemedText>
                   )}
                 </View>
