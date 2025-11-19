@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { PedidoItem, calculateItemSubtotal, formatAmount } from '@/core/pedidos/interface/pedido';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface ShoppingCartProps {
   items: PedidoItem[];
@@ -26,6 +27,7 @@ export default function ShoppingCart({
   onStockValidationError,
   productStockMap,
 }: ShoppingCartProps) {
+  const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -48,7 +50,7 @@ export default function ShoppingCart({
       if (availableStock !== undefined) {
         if (newQuantity > availableStock) {
           if (onStockValidationError) {
-            onStockValidationError(`Stock insuficiente. Disponible: ${availableStock} unidades`);
+            onStockValidationError(t('components.productCard.errors.insufficientStock', { stock: availableStock }));
           }
           // Ajustar a stock máximo
           if (availableStock > 0) {
@@ -77,10 +79,10 @@ export default function ShoppingCart({
       <View style={[styles.emptyContainer, { backgroundColor: primaryColor + '0D' }]}>
         <Ionicons name="cart-outline" size={48} color={textColor + '60'} />
         <Text style={[styles.emptyText, { color: textColor }]}>
-          El carrito está vacío
+          {t('components.shoppingCart.empty')}
         </Text>
         <Text style={[styles.emptySubtext, { color: textColor }]}>
-          Agrega productos para continuar
+          {t('components.shoppingCart.emptySubtext')}
         </Text>
       </View>
     );
@@ -91,7 +93,7 @@ export default function ShoppingCart({
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: textColor + '20' }]}>
         <Text style={[styles.headerTitle, { color: textColor }]}>
-          Resumen del Pedido
+          {t('components.shoppingCart.title')}
         </Text>
         <View style={[styles.itemsBadge, { backgroundColor: primaryColor }]}>
           <Text style={styles.itemsBadgeText}>{items.length}</Text>
@@ -124,7 +126,7 @@ export default function ShoppingCart({
               {/* Quantity Controls */}
               <View style={styles.quantityControls}>
                 <Text style={[styles.quantityLabel, { color: textColor }]}>
-                  Cantidad
+                  {t('components.shoppingCart.quantity')}
                 </Text>
                 <TextInput
                   value={item.cantidad.toString()}
@@ -142,7 +144,7 @@ export default function ShoppingCart({
                 />
                 {availableStock !== undefined && (
                   <Text style={[styles.stockInfo, { color: textColor + '80' }]}>
-                    Stock: {availableStock}
+                    {t('components.shoppingCart.stock')} {availableStock}
                   </Text>
                 )}
               </View>
@@ -172,14 +174,14 @@ export default function ShoppingCart({
       {/* Totals Section */}
       <View style={[styles.totalsSection, { borderTopColor: textColor + '20' }]}>
         <View style={styles.totalRow}>
-          <Text style={[styles.totalLabel, { color: textColor }]}>Subtotal:</Text>
+          <Text style={[styles.totalLabel, { color: textColor }]}>{t('components.shoppingCart.subtotal')}</Text>
           <Text style={[styles.totalValue, { color: textColor }]}>
             {formatAmount(subtotal)}
           </Text>
         </View>
         {/* Aquí se pueden agregar impuestos si aplica */}
         <View style={[styles.totalRow, styles.totalRowFinal]}>
-          <Text style={[styles.totalLabelFinal, { color: textColor }]}>Total:</Text>
+          <Text style={[styles.totalLabelFinal, { color: textColor }]}>{t('components.shoppingCart.total')}</Text>
           <Text style={[styles.totalValueFinal, { color: primaryColor }]}>
             {formatAmount(total)}
           </Text>

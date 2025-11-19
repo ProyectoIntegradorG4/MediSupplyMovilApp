@@ -52,6 +52,8 @@
     "dateLabel": "Fecha de la ruta",
     "loadingRoute": "Cargando ruta...",
     "errorTitle": "Error",
+    "userNotAuthenticated": "Usuario no autenticado",
+    "errorLoadingRoute": "Error al cargar la ruta de visitas",
     "restrictedAccess": "Acceso Restringido",
     "restrictedMessage": "Esta funcionalidad es exclusiva para Gerentes de Cuenta",
     "noVisitsTitle": "No hay visitas programadas",
@@ -302,6 +304,56 @@
       "nameAndSurname": "Ingresa nombre y apellido",
       "onlyLetters": "El nombre solo puede contener letras",
       "valid": "Nombre válido"
+    }
+  },
+  "components": {
+    "clientSelector": {
+      "loading": "Cargando clientes...",
+      "noClients": "No tienes clientes asignados",
+      "title": "Selecciona un Cliente",
+      "subtitle": "Elige el cliente para el cual crearás el pedido",
+      "selected": "Seleccionado"
+    },
+    "productSelector": {
+      "title": "Seleccionar Productos",
+      "searchPlaceholder": "Buscar productos por nombre, SKU o categoría...",
+      "results": "resultado",
+      "resultsPlural": "resultados",
+      "loading": "Cargando productos...",
+      "noProducts": "No se encontraron productos",
+      "noProductsAvailable": "No hay productos disponibles",
+      "continue": "Continuar"
+    },
+    "shoppingCart": {
+      "empty": "El carrito está vacío",
+      "emptySubtext": "Agrega productos para continuar",
+      "title": "Resumen del Pedido",
+      "quantity": "Cantidad",
+      "stock": "Stock:",
+      "subtotal": "Subtotal:",
+      "total": "Total:"
+    },
+    "productCard": {
+      "stock": "Stock:",
+      "units": "unidades",
+      "stockStatus": {
+        "available": "Disponible",
+        "low": "Stock bajo",
+        "medium": "Stock medio"
+      },
+      "quantityLabel": "Inserta Cantidad",
+      "buttons": {
+        "noStock": "Sin Stock",
+        "added": "Agregado",
+        "add": "Agregar"
+      },
+      "errors": {
+        "insufficientStock": "Stock insuficiente. Disponible: {{stock}} unidades",
+        "noStock": "Producto sin stock disponible"
+      }
+    },
+    "searchBar": {
+      "placeholder": "Buscar"
     }
   }
 }

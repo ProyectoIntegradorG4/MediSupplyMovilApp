@@ -30,7 +30,7 @@ const RutasScreen = () => {
   // Cargar ruta de visitas
   const loadRutaVisitas = useCallback(async (showLoader = true) => {
     if (!user?.id) {
-      setError('Usuario no autenticado');
+      setError(t('routes.userNotAuthenticated'));
       return;
     }
 
@@ -48,7 +48,7 @@ const RutasScreen = () => {
       console.log(`✅ Ruta cargada: ${data.cantidad_visitas} visitas`);
     } catch (err: any) {
       console.error('❌ Error al cargar ruta:', err);
-      setError(err.message || 'Error al cargar la ruta de visitas');
+      setError(err.message || t('routes.errorLoadingRoute'));
       setRutaData(null);
     } finally {
       setIsLoading(false);
