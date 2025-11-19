@@ -7,12 +7,14 @@ import {
   View,
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface SearchBarProps extends TextInputProps {
   onSearch?: (text: string) => void;
 }
 
 export default function SearchBar({ onSearch, value, onChangeText, ...rest }: SearchBarProps) {
+  const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -45,7 +47,7 @@ export default function SearchBar({ onSearch, value, onChangeText, ...rest }: Se
       <TextInput
         value={searchText}
         onChangeText={handleChangeText}
-        placeholder="Buscar"
+        placeholder={rest.placeholder || t('components.searchBar.placeholder')}
         placeholderTextColor="#5c5c5c"
         onFocus={() => setIsActive(true)}
         onBlur={() => setIsActive(false)}

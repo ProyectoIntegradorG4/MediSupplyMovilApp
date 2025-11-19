@@ -7,9 +7,11 @@ import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, View, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
 import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
 import { Cliente } from '@/core/clientes/interface/cliente';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 const ClientesScreen = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -44,7 +46,7 @@ const ClientesScreen = () => {
       setClientes(data.clientes);
     } catch (err) {
       console.error('❌ Error al cargar clientes:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar clientes');
+      setError(err instanceof Error ? err.message : t('clients.error.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -94,7 +96,7 @@ const ClientesScreen = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <ThemedText style={styles.title}>Mis Clientes</ThemedText>
+          <ThemedText style={styles.title}>{t('clients.title')}</ThemedText>
           <ThemedText style={styles.subtitle}>
             {user?.fullName || user?.email}
           </ThemedText>
@@ -103,7 +105,7 @@ const ClientesScreen = () => {
         {/* Barra de búsqueda */}
         <View style={styles.searchContainer}>
           <SearchBar
-            placeholder="Buscar cliente, ciudad, contacto..."
+            placeholder={t('clients.searchPlaceholder')}
             value={searchText}
             onChangeText={setSearchText}
             onSearch={setSearchText}
@@ -115,7 +117,7 @@ const ClientesScreen = () => {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#007AFF" />
             <ThemedText style={styles.loadingText}>
-              Cargando clientes...
+              {t('clients.loadingClients')}
             </ThemedText>
           </View>
         )}
@@ -131,7 +133,7 @@ const ClientesScreen = () => {
               style={styles.retryButton as any}
             >
               <ThemedText style={styles.retryText}>
-                Reintentar
+                {t('common.retry')}
               </ThemedText>
             </Pressable>
           </View>
@@ -141,8 +143,8 @@ const ClientesScreen = () => {
         {!loading && !error && (
           <View style={styles.resultCountContainer}>
             <ThemedText style={styles.resultCount}>
-              {filteredClientes.length} {filteredClientes.length === 1 ? 'cliente encontrado' : 'clientes encontrados'}
-              {clientes.length !== filteredClientes.length && ` de ${clientes.length} total`}
+              {filteredClientes.length} {filteredClientes.length === 1 ? t('clients.resultsCount.client') : t('clients.resultsCount.clients')}
+              {clientes.length !== filteredClientes.length && ` ${t('clients.resultsCount.of')} ${clientes.length} ${t('clients.resultsCount.total')}`}
             </ThemedText>
           </View>
         )}
@@ -161,12 +163,12 @@ const ClientesScreen = () => {
             ) : (
               <View style={styles.emptyContainer}>
                 <ThemedText style={styles.emptyText}>
-                  No se encontraron clientes
+                  {t('clients.empty.title')}
                 </ThemedText>
                 <ThemedText style={styles.emptySubtext}>
                   {searchText 
-                    ? 'Intenta con otra búsqueda' 
-                    : 'No tienes clientes asignados'}
+                    ? t('clients.empty.withSearch')
+                    : t('clients.empty.withoutSearch')}
                 </ThemedText>
               </View>
             )}

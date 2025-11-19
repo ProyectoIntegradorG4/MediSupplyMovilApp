@@ -10,6 +10,7 @@ import {
     View,
 } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface ProductCardProps {
     name: string;
@@ -40,6 +41,7 @@ export default function ProductCard({
     onAddToCart,
     onStockValidationError,
 }: ProductCardProps) {
+    const { t } = useTranslation();
     const [quantity, setQuantity] = useState(initialQuantity);
     const [isAdded, setIsAdded] = useState(initialQuantity > 0);
 
@@ -69,9 +71,9 @@ export default function ProductCard({
     };
 
     const stockBadgeText = {
-        available: 'Disponible',
-        low: 'Stock bajo',
-        medium: 'Stock medio',
+        available: t('components.productCard.stockStatus.available'),
+        low: t('components.productCard.stockStatus.low'),
+        medium: t('components.productCard.stockStatus.medium'),
     };
 
     // Colores para los botones según el estado del stock usando el tema
@@ -89,7 +91,7 @@ export default function ProductCard({
 
         // Mostrar alerta si intenta exceder stock
         if (value > stock && onStockValidationError) {
-            onStockValidationError(`Stock insuficiente. Disponible: ${stock} unidades`);
+            onStockValidationError(t('components.productCard.errors.insufficientStock', { stock }));
         }
     };
 
@@ -99,7 +101,7 @@ export default function ProductCard({
         // Validación de stock antes de agregar
         if (quantity > stock) {
             if (onStockValidationError) {
-                onStockValidationError(`Stock insuficiente. Disponible: ${stock} unidades`);
+                onStockValidationError(t('components.productCard.errors.insufficientStock', { stock }));
             }
             setQuantity(stock); // Ajustar a stock máximo
             return;
@@ -107,7 +109,7 @@ export default function ProductCard({
 
         if (stock === 0) {
             if (onStockValidationError) {
-                onStockValidationError('Producto sin stock disponible');
+                onStockValidationError(t('components.productCard.errors.noStock'));
             }
             return;
         }
@@ -157,7 +159,7 @@ export default function ProductCard({
                     <View style={styles.infoRow}>
                         <Ionicons name="cube" size={20} color={textColor} />
                         <Text style={[styles.infoText, { color: textColor }]}>
-                            Stock: {stock} unidades
+                            {t('components.productCard.stock')} {stock} {t('components.productCard.units')}
                         </Text>
                         <View
                             style={[
@@ -194,7 +196,7 @@ export default function ProductCard({
                 {/* Columna derecha: Controles de cantidad */}
                 <View style={styles.controlsColumn}>
                     <Text style={[styles.quantityLabel, { color: textColor }]}>
-                        Inserta Cantidad
+                        {t('components.productCard.quantityLabel')}
                     </Text>
                     <TextInput
                         value={quantity.toString()}
@@ -222,7 +224,7 @@ export default function ProductCard({
                         ]}
                     >
                         <Text style={[styles.buttonText, { color: textOnPrimary }]}>
-                            {stock === 0 ? 'Sin Stock' : isAdded ? 'Agregado' : 'Agregar'}
+                            {stock === 0 ? t('components.productCard.buttons.noStock') : isAdded ? t('components.productCard.buttons.added') : t('components.productCard.buttons.add')}
                         </Text>
                     </Pressable>
                 </View>

@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import StatusBadge from './StatusBadge';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 type OrderStatus = 'pendiente' | 'enviado' | 'entregado' | 'cancelado';
 
@@ -27,6 +28,7 @@ interface OrderCardProps {
 }
 
 export default function OrderCard({ order, onPress }: OrderCardProps) {
+  const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -88,7 +90,7 @@ export default function OrderCard({ order, onPress }: OrderCardProps) {
           <View style={styles.dateSection}>
             <Ionicons name="calendar-outline" size={20} color={textColor} style={styles.icon} />
             <View style={styles.dateContent}>
-              <Text style={[styles.dateLabel, { color: textColor }]}>Fecha Creación</Text>
+              <Text style={[styles.dateLabel, { color: textColor }]}>{t('orders.card.creationDate')}</Text>
               <Text style={[styles.dateValue, { color: textColor }]}>{order.creationDate}</Text>
             </View>
           </View>
@@ -96,7 +98,7 @@ export default function OrderCard({ order, onPress }: OrderCardProps) {
           <View style={styles.dateSection}>
             <Ionicons name="timer-outline" size={20} color={textColor} style={styles.icon} />
             <View style={styles.dateContent}>
-              <Text style={[styles.dateLabel, { color: textColor }]}>Fecha Entrega</Text>
+              <Text style={[styles.dateLabel, { color: textColor }]}>{t('orders.card.deliveryDate')}</Text>
               <Text style={[styles.dateValue, { color: textColor }]}>{order.deliveryDate}</Text>
             </View>
           </View>

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { Fonts, BorderRadius, Spacing, FontSizes } from '@/constants/theme';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 type OrderStatus = 'pendiente' | 'enviado' | 'entregado' | 'cancelado';
 
@@ -10,6 +11,7 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
+  const { t } = useTranslation();
   const badgePendingBg = useThemeColor({}, 'badgePendingBg');
   const badgePendingText = useThemeColor({}, 'badgePendingText');
   const badgeSentBg = useThemeColor({}, 'badgeSentBg');
@@ -23,22 +25,22 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     pendiente: {
       backgroundColor: badgePendingBg,
       textColor: badgePendingText,
-      label: 'Pendiente',
+      label: t('orders.status.pendiente'),
     },
     enviado: {
       backgroundColor: badgeSentBg,
       textColor: badgeSentText,
-      label: 'Enviado',
+      label: t('orders.status.enviado'),
     },
     entregado: {
       backgroundColor: badgeDeliveredBg,
       textColor: badgeDeliveredText,
-      label: 'Entregado',
+      label: t('orders.status.entregado'),
     },
     cancelado: {
       backgroundColor: badgeCancelledBg,
       textColor: badgeCancelledText,
-      label: 'Cancelado',
+      label: t('orders.status.cancelado'),
     },
   };
 
