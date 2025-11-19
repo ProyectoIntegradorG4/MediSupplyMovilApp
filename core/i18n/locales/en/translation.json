@@ -10,7 +10,8 @@
     "error": "Error",
     "success": "Success",
     "no": "No",
-    "yes": "Yes"
+    "yes": "Yes",
+    "retry": "Retry"
   },
   "profile": {
     "title": "Profile",
@@ -44,6 +45,264 @@
     "deliveries": "Deliveries",
     "routes": "Routes",
     "profile": "Profile"
+  },
+  "routes": {
+    "title": "Visit Route",
+    "accountManager": "Account Manager",
+    "dateLabel": "Route date",
+    "loadingRoute": "Loading route...",
+    "errorTitle": "Error",
+    "restrictedAccess": "Restricted Access",
+    "restrictedMessage": "This feature is exclusive for Account Managers",
+    "noVisitsTitle": "No scheduled visits",
+    "noVisitsMessage": "You have no assigned visits for this date.",
+    "summaryTitle": "Route summary",
+    "visits": "Visits",
+    "totalTime": "Total time",
+    "distance": "Distance",
+    "schedule": "Schedule",
+    "scheduledVisits": "Scheduled visits",
+    "optimizedRoute": "Optimized route - Version {{version}}",
+    "origin": "Origin: {{origin}}",
+    "priorities": {
+      "high": "HIGH",
+      "medium": "MEDIUM",
+      "low": "LOW",
+      "label": "Priority"
+    },
+    "duration": "Duration",
+    "fromPrevious": "from previous",
+    "originTypes": {
+      "planned": "planned",
+      "recalculated": "recalculated",
+      "manual": "manual"
+    }
+  },
+  "clients": {
+    "title": "My Clients",
+    "searchPlaceholder": "Search client, city, contact...",
+    "loadingClients": "Loading clients...",
+    "resultsCount": {
+      "client": "client found",
+      "clients": "clients found",
+      "of": "of",
+      "total": "total"
+    },
+    "empty": {
+      "title": "No clients found",
+      "withSearch": "Try a different search",
+      "withoutSearch": "You have no assigned clients"
+    },
+    "error": {
+      "loadFailed": "Failed to load clients"
+    },
+    "actions": {
+      "registerVisit": "Register Visit"
+    },
+    "card": {
+      "updated": "Updated",
+      "noAddress": "No address",
+      "noDate": "No date"
+    },
+    "institutionTypes": {
+      "Hospital": "Hospital",
+      "Clínica": "Clinic",
+      "IPS": "IPS",
+      "EPS": "HMO",
+      "Laboratorio Clínico": "Clinical Laboratory",
+      "Centro de Salud": "Health Center"
+    }
+  },
+  "orders": {
+    "title": "My Orders",
+    "new": "New",
+    "loading": "Loading orders...",
+    "loadingOrder": "Loading order...",
+    "noOrders": "No orders",
+    "createFirst": "Create First Order",
+    "emptyMessage": {
+      "institutional": "Create your first order to get started",
+      "manager": "Your clients haven't created orders yet"
+    },
+    "filters": {
+      "byClient": "Filter by client:",
+      "bySite": "Filter by site:",
+      "selectClient": "Select client",
+      "selectSite": "Select site",
+      "allClients": "All clients",
+      "allSites": "All sites"
+    },
+    "card": {
+      "creationDate": "Creation Date",
+      "deliveryDate": "Delivery Date"
+    },
+    "detail": {
+      "order": "Order",
+      "notFound": "Order not found.",
+      "summary": "Summary",
+      "nit": "Tax ID:",
+      "created": "Created:",
+      "total": "Total:",
+      "units": "Units:",
+      "products": "Products",
+      "statusHistory": "Status History",
+      "noChanges": "No changes recorded."
+    },
+    "status": {
+      "pendiente": "Pending",
+      "enviado": "Sent",
+      "entregado": "Delivered",
+      "cancelado": "Cancelled"
+    },
+    "newOrder": {
+      "title": "New Order",
+      "step1": "Step 1: Select Client",
+      "step2": "Step 2: Select Products",
+      "step3": "Step 3: Review Order",
+      "confirming": "Confirming...",
+      "loadingProducts": "Loading products...",
+      "addProducts": "Add Products",
+      "cartItems": "Products in cart",
+      "creatingOrder": "Creating order...",
+      "back": "Back",
+      "next": "Next",
+      "confirmOrder": "Confirm Order",
+      "validation": {
+        "selectClient": "You must select a client",
+        "addProduct": "You must add at least one product",
+        "missingData": "Missing data to create order"
+      },
+      "success": {
+        "orderCreated": "Order Created",
+        "orderCreatedMessage": "Order {{refNumber}} created successfully",
+        "productAdded": "Product added to cart"
+      },
+      "errors": {
+        "loadClients": "Could not load clients",
+        "loadProducts": "Could not load products",
+        "createOrder": "Could not create order",
+        "productNotFound": "Product not found",
+        "addToCart": "Could not add product to cart",
+        "insufficientStock": "Insufficient Stock",
+        "insufficientStockMessage": "Insufficient stock. Available: {{available}} units",
+        "insufficientStockCart": "Insufficient stock. Available: {{available}} units. You already have {{current}} in cart."
+      }
+    }
+  },
+  "deliveries": {
+    "title": "Delivery Status",
+    "welcome": "Welcome, {{name}}",
+    "role": "Role:",
+    "noRole": "No role",
+    "loading": "Loading deliveries...",
+    "noDeliveries": "No deliveries available",
+    "order": "Order",
+    "labels": {
+      "scheduled": "Scheduled:",
+      "eta": "ETA:",
+      "delivered": "Delivered:",
+      "vehicle": "Vehicle:"
+    },
+    "status": {
+      "programada": "SCHEDULED",
+      "en_ruta": "IN TRANSIT",
+      "entregada": "DELIVERED",
+      "devuelta": "RETURNED",
+      "unknown": "UNKNOWN"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Log In",
+      "subtitle": "Please log in to continue",
+      "emailPlaceholder": "Email address",
+      "passwordPlaceholder": "Password",
+      "loginButton": "Log In",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Sign Up",
+      "validation": {
+        "passwordRequired": "Password is required",
+        "passwordEmpty": "Password cannot be empty"
+      },
+      "errors": {
+        "incompleteForm": "Incomplete Form",
+        "incompleteFormMessage": "Please correct the errors marked in the form",
+        "understood": "Understood",
+        "invalidCredentials": "Invalid username or password"
+      }
+    },
+    "register": {
+      "title": "Sign Up",
+      "subtitle": "Please create an account to continue",
+      "fullNamePlaceholder": "Full name",
+      "emailPlaceholder": "Email address",
+      "nitPlaceholder": "Tax ID Number (NIT)",
+      "passwordPlaceholder": "Password",
+      "registerButton": "Sign Up",
+      "creatingAccount": "Creating account...",
+      "hasAccount": "Already have an account?",
+      "login": "Log In",
+      "success": {
+        "title": "🎉 Registration Successful",
+        "message": "Welcome {{username}}!\nYour institutional account has been created with Tax ID {{nit}}",
+        "continue": "Continue"
+      },
+      "validation": {
+        "incompleteForm": "Incomplete Form",
+        "incompleteFormMessage": "Please correct the errors marked in the form",
+        "understood": "Understood"
+      },
+      "errors": {
+        "registrationError": "Registration Error",
+        "dataValidation": "Data Validation",
+        "dataValidationMessage": "The entered data does not comply with business rules",
+        "invalidNit": "Invalid Tax ID",
+        "invalidNitMessage": "The entered Tax ID is not authorized for registration",
+        "userExists": "User Exists",
+        "userExistsMessage": "An account with this email already exists",
+        "validationErrors": "Validation Errors",
+        "validationErrorsMessage": "Please correct the errors marked in the form",
+        "genericError": "There was a problem creating your account. Please try again.",
+        "retry": "Retry",
+        "connectionError": "Connection Error",
+        "networkError": "Could not connect to server. Check your internet connection.",
+        "timeoutError": "Connection timed out. Please try again.",
+        "unexpectedError": "An unexpected problem occurred. Please try again."
+      }
+    }
+  },
+  "validation": {
+    "email": {
+      "required": "Email is required",
+      "invalid": "Please enter a valid email address",
+      "valid": "Valid email"
+    },
+    "nit": {
+      "required": "Tax ID is required",
+      "onlyNumbers": "Tax ID must contain only numbers",
+      "length": "Tax ID must be between 9 and 10 digits",
+      "valid": "Valid Tax ID"
+    },
+    "password": {
+      "required": "Password is required",
+      "minLength": "Password must be at least 8 characters",
+      "mustInclude": "Must include: {{missing}}",
+      "acceptable": "Acceptable password",
+      "strong": "Strong password",
+      "requirements": {
+        "uppercase": "uppercase letters",
+        "lowercase": "lowercase letters",
+        "numbers": "numbers",
+        "special": "special characters"
+      }
+    },
+    "fullName": {
+      "required": "Full name is required",
+      "minLength": "Name must be at least 3 characters",
+      "nameAndSurname": "Enter name and surname",
+      "onlyLetters": "Name can only contain letters",
+      "valid": "Valid name"
+    }
   }
 }
 

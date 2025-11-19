@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '../hooks/useThemeColor';
 import { Cliente, TipoInstitucion } from '@/core/clientes/interface/cliente';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface ClientCardProps {
     cliente: Cliente;
@@ -13,6 +14,7 @@ export default function ClientCard({
     cliente,
     onRegisterVisit,
 }: ClientCardProps) {
+    const { t } = useTranslation();
     const primaryColor = useThemeColor({}, 'primary');
     const textColor = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
@@ -23,7 +25,7 @@ export default function ClientCard({
         cliente.direccion,
         cliente.ciudad,
         cliente.departamento
-    ].filter(Boolean).join(', ') || 'Sin dirección';
+    ].filter(Boolean).join(', ') || t('clients.card.noAddress');
 
     // Formatear última actualización
     const lastUpdate = cliente.fecha_actualizacion 
@@ -32,7 +34,7 @@ export default function ClientCard({
             month: '2-digit',
             year: 'numeric'
           })
-        : 'Sin fecha';
+        : t('clients.card.noDate');
 
     return (
         <View style={[styles.card, { backgroundColor: primaryColor + '0D' }]}>
@@ -48,7 +50,7 @@ export default function ClientCard({
                     ]}
                 >
                     <Text style={[styles.typeText, { color: primaryColor }]}>
-                        {cliente.tipo_institucion}
+                        {t(`clients.institutionTypes.${cliente.tipo_institucion}`)}
                     </Text>
                 </View>
             </View>
@@ -118,7 +120,7 @@ export default function ClientCard({
                         style={styles.icon}
                     />
                     <Text style={[styles.infoText, { color: textColor }]}>
-                        Actualizado: {lastUpdate}
+                        {t('clients.card.updated')}: {lastUpdate}
                     </Text>
                 </View>
             </View>
@@ -136,7 +138,7 @@ export default function ClientCard({
                 ]}
             >
                 <Text style={[styles.buttonText, { color: textColor }]}>
-                    Registrar Visita
+                    {t('clients.actions.registerVisit')}
                 </Text>
                 <Ionicons
                     name="chevron-forward"

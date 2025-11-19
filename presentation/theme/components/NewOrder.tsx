@@ -21,6 +21,7 @@ import { PedidoItem, PedidoCreateRequest } from '@/core/pedidos/interface/pedido
 import { getClientesGerenteMock, getProductsMock, createOrderMock, getProductBySkuMock, checkStockMock, Product } from '@/core/pedidos/api/pedidosApi';
 import { fetchClientes, fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
 import { getClientesPorNit } from '@/core/clientes/api/clientesApi';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 type OrderStep = 'cliente' | 'productos' | 'resumen' | 'confirmacion';
 
@@ -36,6 +37,7 @@ export default function NewOrderModal({
   onOrderCreated,
 }: NewOrderModalProps) {
   const { user, hasRole } = useAuthStore();
+  const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -115,7 +117,7 @@ export default function NewOrderModal({
         setCurrentStep('productos');
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los clientes');
+      Alert.alert(t('common.error'), t('orders.newOrder.errors.loadClients'));
       console.error('Error loading clientes:', error);
     } finally {
       setIsLoadingClientes(false);
@@ -128,7 +130,7 @@ export default function NewOrderModal({
       const productsData = await getProductsMock();
       setProducts(productsData);
     } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los productos');
+      Alert.alert(t('common.error'), t('orders.newOrder.errors.loadProducts'));
       console.error('Error loading products:', error);
     } finally {
       setIsLoadingProducts(false);
@@ -158,7 +160,7 @@ export default function NewOrderModal({
     try {
       const product = await getProductBySkuMock(sku);
       if (!product) {
-        Alert.alert('Error', 'Producto no encontrado');
+        Alert.alert(t('common.error'), t('orders.newOrder.errors.productNotFound'));
         return;
       }
 
@@ -166,7 +168,7 @@ export default function NewOrderModal({
       const stockCheck = await checkStockMock(product.productoId, cantidad);
       
       if (!stockCheck.valid) {
-        Alert.alert('Stock Insuficiente', stockCheck.message || 'No hay suficiente stock disponible');
+        Alert.alert(t('orders.newOrder.errors.insufficientStock'), stockCheck.message || t('orders.newOrder.errors.insufficientStockMessage', { available: stockCheck.available }));
         // Recargar productos para actualizar el stock mostrado
         await loadProducts();
         return;
@@ -179,8 +181,8 @@ export default function NewOrderModal({
       // Validar que la cantidad total no exceda el stock disponible
       if (cantidadTotalSolicitada > stockCheck.available) {
         Alert.alert(
-          'Stock Insuficiente',
-          `Stock insuficiente. Disponible: ${stockCheck.available} unidades. Ya tienes ${existingItem?.cantidad || 0} en el carrito.`
+          t('orders.newOrder.errors.insufficientStock'),
+          t('orders.newOrder.errors.insufficientStockCart', { available: stockCheck.available, current: existingItem?.cantidad || 0 })
         );
         // Recargar productos para actualizar el stock mostrado
         await loadProducts();
@@ -216,10 +218,10 @@ export default function NewOrderModal({
         )
       );
 
-      Alert.alert('Éxito', 'Producto agregado al carrito');
+      Alert.alert(t('common.success'), t('orders.newOrder.success.productAdded'));
     } catch (error) {
       console.error('Error agregando producto al carrito:', error);
-      Alert.alert('Error', 'No se pudo agregar el producto al carrito');
+      Alert.alert(t('common.error'), t('orders.newOrder.errors.addToCart'));
     }
   };
 
@@ -233,7 +235,7 @@ export default function NewOrderModal({
     // Buscar el producto para obtener su ID
     const product = products.find((p) => p.sku === sku);
     if (!product) {
-      Alert.alert('Error', 'Producto no encontrado');
+      Alert.alert(t('common.error'), t('orders.newOrder.errors.productNotFound'));
       return;
     }
 
@@ -242,8 +244,8 @@ export default function NewOrderModal({
     
     if (!stockCheck.valid || newQuantity > stockCheck.available) {
       Alert.alert(
-        'Stock Insuficiente',
-        stockCheck.message || `Stock insuficiente. Disponible: ${stockCheck.available} unidades`
+        t('orders.newOrder.errors.insufficientStock'),
+        stockCheck.message || t('orders.newOrder.errors.insufficientStockMessage', { available: stockCheck.available })
       );
       // Recargar productos para actualizar el stock mostrado
       await loadProducts();
@@ -284,13 +286,13 @@ export default function NewOrderModal({
   const handleNext = () => {
     if (currentStep === 'cliente') {
       if (!selectedCliente) {
-        Alert.alert('Validación', 'Debes seleccionar un cliente');
+        Alert.alert(t('common.error'), t('orders.newOrder.validation.selectClient'));
         return;
       }
       setCurrentStep('productos');
     } else if (currentStep === 'productos') {
       if (cartItems.length === 0) {
-        Alert.alert('Validación', 'Debes agregar al menos un producto');
+        Alert.alert(t('common.error'), t('orders.newOrder.validation.addProduct'));
         return;
       }
       setCurrentStep('resumen');
@@ -315,7 +317,7 @@ export default function NewOrderModal({
   // Crear pedido
   const handleSubmitOrder = async () => {
     if (!selectedCliente || cartItems.length === 0) {
-      Alert.alert('Error', 'Faltan datos para crear el pedido');
+      Alert.alert(t('common.error'), t('orders.newOrder.validation.missingData'));
       return;
     }
 
@@ -334,8 +336,8 @@ export default function NewOrderModal({
       await loadProducts();
 
       Alert.alert(
-        'Pedido Creado',
-        `Pedido ${response.refNumber} creado exitosamente`,
+        t('orders.newOrder.success.orderCreated'),
+        t('orders.newOrder.success.orderCreatedMessage', { refNumber: response.refNumber }),
         [
           {
             text: 'OK',
@@ -347,7 +349,7 @@ export default function NewOrderModal({
         ]
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'No se pudo crear el pedido');
+      Alert.alert(t('common.error'), error.message || t('orders.newOrder.errors.createOrder'));
       setCurrentStep('resumen');
     } finally {
       setIsSubmitting(false);
@@ -367,15 +369,15 @@ export default function NewOrderModal({
   const getStepTitle = () => {
     switch (currentStep) {
       case 'cliente':
-        return 'Paso 1: Seleccionar Cliente';
+        return t('orders.newOrder.step1');
       case 'productos':
-        return 'Paso 2: Seleccionar Productos';
+        return t('orders.newOrder.step2');
       case 'resumen':
-        return 'Paso 3: Revisar Pedido';
+        return t('orders.newOrder.step3');
       case 'confirmacion':
-        return 'Confirmando...';
+        return t('orders.newOrder.confirming');
       default:
-        return 'Nuevo Pedido';
+        return t('orders.newOrder.title');
     }
   };
 
@@ -498,7 +500,7 @@ export default function NewOrderModal({
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={primaryColor} />
                     <Text style={[styles.loadingText, { color: textColor }]}>
-                      Cargando productos...
+                      {t('orders.newOrder.loadingProducts')}
                     </Text>
                   </View>
                 ) : (
@@ -515,14 +517,14 @@ export default function NewOrderModal({
                     >
                       <Ionicons name="add-circle" size={24} color="white" />
                       <Text style={styles.addProductText}>
-                        Agregar Productos
+                        {t('orders.newOrder.addProducts')}
                       </Text>
                     </Pressable>
 
                     {cartItems.length > 0 && (
                       <View style={styles.cartPreview}>
                         <Text style={[styles.cartPreviewTitle, { color: textColor }]}>
-                          Productos en el carrito ({cartItems.length})
+                          {t('orders.newOrder.cartItems')} ({cartItems.length})
                         </Text>
                       </View>
                     )}
@@ -535,7 +537,7 @@ export default function NewOrderModal({
               <View style={styles.confirmationContainer}>
                 <ActivityIndicator size="large" color={primaryColor} />
                 <Text style={[styles.confirmationText, { color: textColor }]}>
-                  Creando pedido...
+                  {t('orders.newOrder.creatingOrder')}
                 </Text>
               </View>
             )}
@@ -556,7 +558,7 @@ export default function NewOrderModal({
                 >
                   <Ionicons name="arrow-back" size={20} color={textColor} />
                   <Text style={[styles.footerButtonText, { color: textColor }]}>
-                    Atrás
+                    {t('orders.newOrder.back')}
                   </Text>
                 </Pressable>
               )}
@@ -584,7 +586,7 @@ export default function NewOrderModal({
                 ]}
               >
                 <Text style={[styles.footerButtonText, { color: 'white' }]}>
-                  {currentStep === 'resumen' ? 'Confirmar Pedido' : 'Siguiente'}
+                  {currentStep === 'resumen' ? t('orders.newOrder.confirmOrder') : t('orders.newOrder.next')}
                 </Text>
                 {currentStep !== 'resumen' && (
                   <Ionicons name="arrow-forward" size={20} color="white" />
