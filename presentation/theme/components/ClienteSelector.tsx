@@ -10,6 +10,7 @@ import {
 import { useThemeColor } from '../hooks/useThemeColor';
 import ClientCard from './ClientCard';
 import { Cliente } from '@/core/clientes/interface/cliente';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 interface ClienteSelectorProps {
   clientes: Cliente[];
@@ -24,6 +25,7 @@ export default function ClienteSelector({
   onSelectCliente,
   isLoading = false,
 }: ClienteSelectorProps) {
+  const { t } = useTranslation();
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const backgroundColor = useThemeColor({}, 'background');
@@ -31,7 +33,7 @@ export default function ClienteSelector({
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text style={[styles.title, { color: textColor }]}>Cargando clientes...</Text>
+        <Text style={[styles.title, { color: textColor }]}>{t('components.clientSelector.loading')}</Text>
       </View>
     );
   }
@@ -41,7 +43,7 @@ export default function ClienteSelector({
       <View style={styles.container}>
         <Ionicons name="people-outline" size={48} color={textColor + '60'} />
         <Text style={[styles.emptyText, { color: textColor }]}>
-          No tienes clientes asignados
+          {t('components.clientSelector.noClients')}
         </Text>
       </View>
     );
@@ -50,10 +52,10 @@ export default function ClienteSelector({
   return (
     <View style={styles.container}>
       <Text style={[styles.title, { color: textColor }]}>
-        Selecciona un Cliente
+        {t('components.clientSelector.title')}
       </Text>
       <Text style={[styles.subtitle, { color: textColor + '80' }]}>
-        Elige el cliente para el cual crearás el pedido
+        {t('components.clientSelector.subtitle')}
       </Text>
 
       <FlatList
@@ -83,7 +85,7 @@ export default function ClienteSelector({
               {isSelected && (
                 <View style={[styles.selectedBadge, { backgroundColor: primaryColor }]}>
                   <Ionicons name="checkmark-circle" size={24} color="white" />
-                  <Text style={styles.selectedText}>Seleccionado</Text>
+                  <Text style={styles.selectedText}>{t('components.clientSelector.selected')}</Text>
                 </View>
               )}
             </Pressable>

@@ -52,6 +52,8 @@
     "dateLabel": "Route date",
     "loadingRoute": "Loading route...",
     "errorTitle": "Error",
+    "userNotAuthenticated": "User not authenticated",
+    "errorLoadingRoute": "Error loading visit route",
     "restrictedAccess": "Restricted Access",
     "restrictedMessage": "This feature is exclusive for Account Managers",
     "noVisitsTitle": "No scheduled visits",
@@ -302,6 +304,56 @@
       "nameAndSurname": "Enter name and surname",
       "onlyLetters": "Name can only contain letters",
       "valid": "Valid name"
+    }
+  },
+  "components": {
+    "clientSelector": {
+      "loading": "Loading clients...",
+      "noClients": "You have no assigned clients",
+      "title": "Select a Client",
+      "subtitle": "Choose the client for whom you will create the order",
+      "selected": "Selected"
+    },
+    "productSelector": {
+      "title": "Select Products",
+      "searchPlaceholder": "Search products by name, SKU or category...",
+      "results": "result",
+      "resultsPlural": "results",
+      "loading": "Loading products...",
+      "noProducts": "No products found",
+      "noProductsAvailable": "No products available",
+      "continue": "Continue"
+    },
+    "shoppingCart": {
+      "empty": "Cart is empty",
+      "emptySubtext": "Add products to continue",
+      "title": "Order Summary",
+      "quantity": "Quantity",
+      "stock": "Stock:",
+      "subtotal": "Subtotal:",
+      "total": "Total:"
+    },
+    "productCard": {
+      "stock": "Stock:",
+      "units": "units",
+      "stockStatus": {
+        "available": "Available",
+        "low": "Low stock",
+        "medium": "Medium stock"
+      },
+      "quantityLabel": "Enter Quantity",
+      "buttons": {
+        "noStock": "Out of Stock",
+        "added": "Added",
+        "add": "Add"
+      },
+      "errors": {
+        "insufficientStock": "Insufficient stock. Available: {{stock}} units",
+        "noStock": "Product out of stock"
+      }
+    },
+    "searchBar": {
+      "placeholder": "Search"
     }
   }
 }

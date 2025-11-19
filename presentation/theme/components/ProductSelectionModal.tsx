@@ -14,6 +14,7 @@ import {
 import { useThemeColor } from '../hooks/useThemeColor';
 import ProductCard from './ProductCard';
 import SearchBar from './SearchBar';
+import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 
 // Tipo para productos (compatible con API)
 interface Product {
@@ -60,6 +61,7 @@ export default function ProductSelectionModal({
   products,
   isLoading = false,
 }: ProductSelectionModalProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   
@@ -91,20 +93,20 @@ export default function ProductSelectionModal({
       const product = products.find((p) => p.sku === sku);
 
       if (!product) {
-        Alert.alert('Error', 'Producto no encontrado');
+        Alert.alert(t('common.error'), t('orders.newOrder.errors.productNotFound'));
         return;
       }
 
       // Validación de stock
       if (product.stock === 0) {
-        Alert.alert('Stock Insuficiente', 'Este producto no tiene stock disponible');
+        Alert.alert(t('orders.newOrder.errors.insufficientStock'), t('components.productCard.errors.noStock'));
         return;
       }
 
       if (cantidad > product.stock) {
         Alert.alert(
-          'Stock Insuficiente',
-          `Stock insuficiente. Disponible: ${product.stock} unidades`
+          t('orders.newOrder.errors.insufficientStock'),
+          t('components.productCard.errors.insufficientStock', { stock: product.stock })
         );
         return;
       }
@@ -120,8 +122,8 @@ export default function ProductSelectionModal({
 
   // Callback para errores de validación de stock
   const handleStockValidationError = useCallback((message: string) => {
-    Alert.alert('Stock Insuficiente', message);
-  }, []);
+    Alert.alert(t('orders.newOrder.errors.insufficientStock'), message);
+  }, [t]);
 
   // Formatear precio
   const formatPrice = (precio: number): string => {
@@ -154,7 +156,7 @@ export default function ProductSelectionModal({
           {/* Header */}
           <View style={[styles.header, { backgroundColor: primaryColor + '20' }]}>
             <Text style={[styles.headerTitle, { color: textColor }]}>
-              Seleccionar Productos
+              {t('components.productSelector.title')}
             </Text>
             <Pressable
               onPress={onClose}
@@ -170,14 +172,14 @@ export default function ProductSelectionModal({
           {/* Search Bar */}
           <View style={styles.searchContainer}>
             <SearchBar
-              placeholder="Buscar productos por nombre, SKU o categoría..."
+              placeholder={t('components.productSelector.searchPlaceholder')}
               onChangeText={setSearchQuery}
               value={searchQuery}
               autoCapitalize="none"
             />
             {debouncedSearch && (
               <Text style={[styles.resultsCount, { color: textColor }]}>
-                {filteredProducts.length} resultado{filteredProducts.length !== 1 ? 's' : ''}
+                {filteredProducts.length} {filteredProducts.length !== 1 ? t('components.productSelector.resultsPlural') : t('components.productSelector.results')}
               </Text>
             )}
           </View>
@@ -187,7 +189,7 @@ export default function ProductSelectionModal({
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={primaryColor} />
               <Text style={[styles.loadingText, { color: textColor }]}>
-                Cargando productos...
+                {t('components.productSelector.loading')}
               </Text>
             </View>
           ) : (
@@ -219,8 +221,8 @@ export default function ProductSelectionModal({
                   <Ionicons name="search-outline" size={48} color={textColor + '60'} />
                   <Text style={[styles.emptyText, { color: textColor }]}>
                     {searchQuery
-                      ? 'No se encontraron productos'
-                      : 'No hay productos disponibles'}
+                      ? t('components.productSelector.noProducts')
+                      : t('components.productSelector.noProductsAvailable')}
                   </Text>
                 </View>
               }
@@ -238,7 +240,7 @@ export default function ProductSelectionModal({
               ]}
             >
               <Text style={[styles.footerButtonText, { color: textColor }]}>
-                Continuar
+                {t('components.productSelector.continue')}
               </Text>
             </Pressable>
           </View>
