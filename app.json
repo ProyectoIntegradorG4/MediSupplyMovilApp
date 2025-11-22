@@ -27,7 +27,9 @@
               "NSIncludesSubdomains": true
             }
           }
-        }
+        },
+        "NSCameraUsageDescription": "Necesitamos acceso a la cámara para tomar fotos y videos de evidencias de visitas.",
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a la galería para seleccionar fotos y videos de evidencias de visitas."
       }
     },
     "android": {
@@ -39,7 +41,14 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO"
+      ]
     },
     "web": {
       "output": "static",

@@ -90,6 +90,9 @@ const CheckAuthenticationLayout = () => {
       >
         <Stack.Screen name="(home)/index" />
         <Stack.Screen name="(clientes)/index" />
+        <Stack.Screen name="(clientes)/register-visit" />
+        <Stack.Screen name="(clientes)/[clienteId]/visits" />
+        <Stack.Screen name="(visits)/[visitId]" />
         <Stack.Screen name="(pedidos)/index" />
         <Stack.Screen name="(rutas)/index" />
         <Stack.Screen name="(entregas)/index" />
