@@ -2,9 +2,11 @@
  * API Client para Autenticación y Registro de Usuarios
  * 
  * IMPORTANTE: API Gateway Migration
- * - Todas las peticiones pasan por el API Gateway (NGINX en puerto 80)
+ * - Todas las peticiones pasan por el API Gateway (AWS ALB)
  * - El gateway enruta según el path:
- *   - /api/v1/auth/*  → auth-service:8004
+ *   - /api/v1/login → auth-service:8004
+ *   - /register → user-service:8001
+ *   - /api/v1/auth/* → auth-service:8004
  *   - /api/v1/users/* → user-service:8001
  * 
  * @module core/auth/api/authApi
@@ -42,6 +44,10 @@ authApi.interceptors.request.use(async (config) => {
 if (CONFIG.DEBUG) {
   authApi.interceptors.request.use((config) => {
     console.log(`🌐 [AUTH API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log(`   Full URL: ${config.baseURL}${config.url}`);
+    if (config.data) {
+      console.log(`   Data:`, typeof config.data === 'string' ? config.data : JSON.stringify(config.data));
+    }
     return config;
   });
 
@@ -51,7 +57,16 @@ if (CONFIG.DEBUG) {
       return response;
     },
     (error) => {
-      console.error(`❌ [AUTH API] ${error.response?.status || 'ERROR'} ${error.config?.url}`);
+      const fullUrl = error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown';
+      console.error(`❌ [AUTH API] Error en ${fullUrl}`);
+      console.error(`   Status: ${error.response?.status || 'NO RESPONSE'}`);
+      console.error(`   Message: ${error.message}`);
+      if (error.response?.data) {
+        console.error(`   Response Data:`, JSON.stringify(error.response.data));
+      }
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        console.error(`   ⚠️ Error de conectividad. Verifica que la URL base sea correcta: ${CONFIG.API.GATEWAY_URL}`);
+      }
       return Promise.reject(error);
     }
   );
@@ -143,7 +158,7 @@ export interface UserServiceError {
 /**
  * Registra un nuevo usuario institucional
  * 
- * Endpoint: POST /api/v1/users/register
+ * Endpoint: POST /register
  * Gateway enruta a: user-service:8001
  * 
  * Validaciones del backend:
@@ -156,14 +171,14 @@ export interface UserServiceError {
  * @throws Error con detalles de validación si falla
  */
 export const registerUser = async (userData: RegisterUserData): Promise<RegisterUserResponse> => {
-  const { data } = await authApi.post<RegisterUserResponse>('/api/v1/users/register', userData);
+  const { data } = await authApi.post<RegisterUserResponse>('/register', userData);
   return data;
 };
 
 /**
  * Inicia sesión con email y contraseña
  * 
- * Endpoint: POST /api/v1/auth/login
+ * Endpoint: POST /api/v1/login
  * Gateway enruta a: auth-service:8004
  * 
  * @param credentials Email y contraseña del usuario
@@ -171,7 +186,7 @@ export const registerUser = async (userData: RegisterUserData): Promise<Register
  * @throws Error si credenciales son inválidas
  */
 export const login = async (credentials: LoginData): Promise<LoginResponse> => {
-  const { data } = await authApi.post<LoginResponse>('/api/v1/auth/login', credentials);
+  const { data } = await authApi.post<LoginResponse>('/api/v1/login', credentials);
   return data;
 };
 
