@@ -23,7 +23,11 @@
     "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
     "docker:mobile": "docker-compose --profile mobile up medisupply-mobile",
     "docker:prod": "docker-compose --profile production up medisupply-prod",
-    "docker:build": "docker build -f Dockerfile.dev -t medisupply-dev ."
+    "docker:build": "docker build -f Dockerfile.dev -t medisupply-dev .",
+    "build:apk:eas": "eas build --platform android --profile preview",
+    "build:apk:local": "npx expo prebuild --platform android && cd android && ./gradlew assembleRelease",
+    "build:apk:check": "node ./scripts/check-build-config.js",
+    "build:apk:helper": "bash ./scripts/build-apk.sh"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",

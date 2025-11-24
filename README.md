@@ -433,6 +433,36 @@ npx expo --version
 
 ## 🚀 Despliegue
 
+### **📱 Build para Testing - Generar APK**
+
+> **📖 Manual Completo:** Consulta el [Manual de Build APK](./MANUAL_BUILD_APK.md) para una guía detallada paso a paso.
+
+**Métodos disponibles:**
+
+1. **EAS Build (Recomendado)** - Build en la nube, sin necesidad de Android Studio
+   ```bash
+   # Verificar configuración primero
+   yarn build:apk:check
+   
+   # Build con EAS
+   yarn build:apk:eas
+   ```
+
+2. **Build Local** - Requiere Android Studio configurado
+   ```bash
+   # Build local
+   yarn build:apk:local
+   ```
+
+3. **Script de Ayuda Interactivo**
+   ```bash
+   # Linux/macOS
+   bash ./scripts/build-apk.sh
+   
+   # Windows PowerShell
+   .\scripts\build-apk.ps1
+   ```
+
 ### **📱 Build para tiendas de aplicaciones**
 
 ```bash
