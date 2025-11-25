@@ -161,7 +161,19 @@ export const getProductsMock = async (): Promise<Product[]> => {
     }));
   } catch (error: any) {
     console.error('❌ [PedidosAPI] Error loading products:', error);
-    throw new Error(error.response?.data?.detail || 'Error al cargar productos del inventario');
+    
+    // Manejar diferentes tipos de errores
+    if (error.response?.status === 502) {
+      throw new Error('El servicio de productos no está disponible. Por favor, intente más tarde.');
+    } else if (error.response?.status === 503) {
+      throw new Error('El servicio de productos está temporalmente no disponible.');
+    } else if (error.response?.data?.detail) {
+      throw new Error(error.response.data.detail);
+    } else if (error.message) {
+      throw new Error(error.message);
+    } else {
+      throw new Error('Error al cargar productos del inventario');
+    }
   }
 };
 
@@ -591,9 +603,31 @@ export const createOrderMock = async (
       }
       
       if (typeof detail === 'object') {
-        // Error estructurado del backend
-        if (detail.error === 'INVENTARIO_INSUFICIENTE') {
-          throw new Error(detail.mensaje || 'Inventario insuficiente para uno o más productos');
+        // Error estructurado del backend con validaciones por producto
+        if (detail.error === 'INVENTARIO_INSUFICIENTE' || detail.error === 'OUT_OF_STOCK' || detail.error === 'STOCK_INSUFFICIENT') {
+          // Construir mensaje detallado con información por producto
+          let mensajeDetallado = detail.mensaje || 'Inventario insuficiente para uno o más productos';
+          
+          if (detail.validaciones && Array.isArray(detail.validaciones) && detail.validaciones.length > 0) {
+            const productosConError = detail.validaciones
+              .filter((v: any) => !v.disponible)
+              .map((v: any) => {
+                // Intentar obtener nombre del producto desde los items del request si está disponible
+                const productoNombre = v.nombre_producto || v.producto_id?.substring(0, 8) || 'Producto';
+                return `• ${productoNombre}: Stock disponible ${v.cantidad_disponible}, solicitado ${v.cantidad_solicitada}`;
+              });
+            
+            if (productosConError.length > 0) {
+              mensajeDetallado = `Stock insuficiente:\n${productosConError.join('\n')}`;
+            }
+          }
+          
+          // Crear error con información estructurada
+          const stockError: any = new Error(mensajeDetallado);
+          stockError.errorCode = detail.error;
+          stockError.validaciones = detail.validaciones || [];
+          stockError.sugerencias = detail.sugerencias || [];
+          throw stockError;
         }
         
         if (detail.error === 'VALIDACION_FALLIDA') {
@@ -619,8 +653,7 @@ export const createOrderMock = async (
 // ========================================
 // EXPORTS
 // ========================================
-
-export type { Product };
+// Product interface is already exported above (line 26)
 
 // ========================================
 // FUNCIONES DE ENTREGAS
