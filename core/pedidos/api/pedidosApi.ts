@@ -75,9 +75,11 @@ pedidosApi.interceptors.request.use(async (config) => {
         config.headers['rol-usuario'] = rol;
       }
       // Agregar NIT del usuario si está disponible (necesario para usuario_institucional)
+      // IMPORTANTE: Mantener el formato original del NIT (ej: 17-767-0400) para búsquedas
       if (user.nit && !config.headers['nit-usuario']) {
-        config.headers['nit-usuario'] = user.nit;
-        console.log(`📋 [PEDIDOS API] NIT usuario agregado al header: ${user.nit}`);
+        // Solo hacer trim, mantener formato original con guiones
+        config.headers['nit-usuario'] = String(user.nit).trim();
+        console.log(`📋 [PEDIDOS API] NIT usuario agregado al header (formato original): ${user.nit}`);
       } else if (!user.nit) {
         console.warn('⚠️ [PEDIDOS API] Usuario sin NIT en storage:', user);
       }
@@ -477,9 +479,26 @@ export const createOrderMock = async (
       }
     }
 
+    // Validar que tenemos todos los datos necesarios
+    // IMPORTANTE: Mantener el NIT en su formato original (ej: 17-767-0400) para búsquedas
+    if (!clienteIdForOrder) {
+      const errorMsg = rolUsuario === 'usuario_institucional' 
+        ? 'cliente_id es requerido para usuario_institucional'
+        : 'cliente_id es requerido para crear el pedido';
+      console.error(`❌ [PedidosAPI] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+    
+    if (!nit || nit.trim() === '') {
+      const errorMsg = 'NIT es requerido para crear el pedido';
+      console.error(`❌ [PedidosAPI] ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+
     // Convertir formato frontend a formato backend
+    // Mantener el NIT en su formato original para que las búsquedas funcionen correctamente
     const requestBackend: PedidoCreateRequestBackend = {
-      nit: nit,
+      nit: nit.trim(), // Mantener formato original (ej: 17-767-0400)
       cliente_id: clienteIdForOrder as number,
       productos: request.items.map(item => ({
         producto_id: item.productoId,
@@ -492,9 +511,26 @@ export const createOrderMock = async (
       'usuario-id': String(usuarioId),
       'rol-usuario': rolUsuario,
     };
-    // Para usuario_institucional, enviar también cliente-id con la sede seleccionada
-    if (rolUsuario === 'usuario_institucional' && clienteIdForOrder) {
+    
+    // Para usuario_institucional, enviar también cliente-id y nit-usuario en formato original
+    if (rolUsuario === 'usuario_institucional') {
+      if (!clienteIdForOrder) {
+        throw new Error('cliente_id es requerido en el header para usuario_institucional');
+      }
       extraHeaders['cliente-id'] = String(clienteIdForOrder);
+      // Enviar NIT en formato original para que las búsquedas funcionen
+      if (nit) {
+        extraHeaders['nit-usuario'] = nit.trim();
+        console.log(`📋 [PEDIDOS API] NIT usuario agregado al header (formato original): ${nit.trim()}`);
+      }
+    } else if (rolUsuario === 'gerente_cuenta') {
+      // Para gerente_cuenta, el cliente-id no es requerido en el header (viene en el body)
+      // Pero enviar NIT si está disponible para logging/validación
+      if (nit) {
+        extraHeaders['nit-usuario'] = nit.trim();
+        console.log(`📋 [PEDIDOS API] NIT gerente agregado al header (formato original): ${nit.trim()}`);
+      }
+      // No enviar cliente-id para gerente_cuenta ya que no es requerido y puede ser undefined
     }
 
     const response = await pedidosApi.post('/api/v1/pedidos/', requestBackend, { headers: extraHeaders });
@@ -533,17 +569,50 @@ export const createOrderMock = async (
   } catch (error: any) {
     console.error('❌ [PedidosAPI] Error creating order:', error);
     
+    // Log detallado del error para debugging
+    if (error.response) {
+      console.error('   Status:', error.response.status);
+      console.error('   Data:', JSON.stringify(error.response.data, null, 2));
+      console.error('   Headers enviados:', {
+        'usuario-id': error.config?.headers?.['usuario-id'],
+        'rol-usuario': error.config?.headers?.['rol-usuario'],
+        'nit-usuario': error.config?.headers?.['nit-usuario'],
+        'cliente-id': error.config?.headers?.['cliente-id'],
+      });
+      console.error('   Request body:', JSON.stringify(error.config?.data, null, 2));
+    }
+    
     if (error.response?.data?.detail) {
       const detail = error.response.data.detail;
+      
+      // Manejar diferentes tipos de errores
       if (typeof detail === 'string') {
         throw new Error(detail);
       }
-      if (detail.error === 'INVENTARIO_INSUFICIENTE') {
-        throw new Error(detail.mensaje || 'Inventario insuficiente para uno o más productos');
+      
+      if (typeof detail === 'object') {
+        // Error estructurado del backend
+        if (detail.error === 'INVENTARIO_INSUFICIENTE') {
+          throw new Error(detail.mensaje || 'Inventario insuficiente para uno o más productos');
+        }
+        
+        if (detail.error === 'VALIDACION_FALLIDA') {
+          throw new Error(detail.mensaje || 'Error de validación al crear el pedido');
+        }
+        
+        // Si tiene mensaje, usarlo
+        if (detail.mensaje) {
+          throw new Error(detail.mensaje);
+        }
       }
     }
     
-    throw error;
+    // Error de red o desconocido
+    if (error.message) {
+      throw new Error(error.message);
+    }
+    
+    throw new Error('Error desconocido al crear el pedido. Por favor, intente nuevamente.');
   }
 };
 

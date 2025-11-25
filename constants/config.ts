@@ -1,184 +1,129 @@
 /**
  * Configuración centralizada de la aplicación
- * Usa variables de entorno para mayor flexibilidad
+ * 
+ * SEPARACIÓN DE CONFIGURACIONES:
+ * ==============================
+ * 
+ * 1. GATEWAY API (cambia según entorno):
+ *    - EXPO_PUBLIC_ENV=aws → Gateway AWS (ALB)
+ *    - EXPO_PUBLIC_ENV=local → Gateway local (IP desarrollo)
+ *    - Solo afecta las peticiones HTTP a los web services
+ * 
+ * 2. DESARROLLO EXPO (siempre local):
+ *    - REACT_NATIVE_PACKAGER_HOSTNAME → IP máquina desarrollo (192.168.10.5)
+ *    - EXPO_PACKAGER_HOST → IP máquina desarrollo (192.168.10.5)
+ *    - Estas NO cambian, siempre apuntan a tu máquina local
+ *    - Configuradas en .env, no en este archivo
+ * 
+ * USO:
+ * - Para prototipar y validar web services, cambia solo EXPO_PUBLIC_ENV
+ * - El packager siempre descarga desde tu IP local (192.168.10.5)
+ * - Las peticiones API van al gateway según EXPO_PUBLIC_ENV
  */
 
 import { Platform } from 'react-native';
 
-// === CONFIGURACIÓN DE ENTORNO ===
+type RuntimeEnv = 'aws' | 'local';
+
+// Función helper segura para obtener variables de entorno
+function getEnvVar(key: string, defaultValue?: string): string | undefined {
+  try {
+    if (typeof process !== 'undefined' && process.env && process.env[key]) {
+      return process.env[key];
+    }
+  } catch (e) {
+    // Silently fail if process.env is not available
+  }
+  return defaultValue;
+}
+
+/**
+ * Determina el entorno de ejecución (aws | local)
+ * Solo afecta la URL del gateway API, NO las configuraciones de desarrollo
+ */
+const ENV: RuntimeEnv = ((getEnvVar('EXPO_PUBLIC_ENV') as RuntimeEnv) || 'aws') as RuntimeEnv;
+
+/**
+ * Resuelve la URL del gateway API según el entorno configurado
+ * 
+ * Esta es la ÚNICA configuración que cambia según EXPO_PUBLIC_ENV
+ * Todas las peticiones HTTP a los web services usan esta URL
+ * 
+ * @returns URL del gateway (AWS ALB o IP local)
+ */
+function resolveGatewayUrl(): string {
+    if (ENV === 'aws') {
+        // Gateway AWS - ALB (puerto 80 por defecto, no requiere especificar puerto)
+        const awsGatewayUrl = getEnvVar('EXPO_PUBLIC_GATEWAY_URL');
+        return awsGatewayUrl || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com';
+    }
+    
+    // Gateway local - IP de desarrollo
+    // NOTA: Esta IP es para el gateway API, NO para el packager de Expo
+    const localGatewayUrl = getEnvVar('EXPO_PUBLIC_LOCAL_GATEWAY_URL');
+    return localGatewayUrl || 'http://192.168.10.5:80';
+}
+
 export const CONFIG = {
-    // Entorno actual
-    STAGE: process.env.EXPO_PUBLIC_STAGE || 'dev',
-    IS_DEV: process.env.EXPO_PUBLIC_STAGE === 'dev',
-    IS_PROD: process.env.EXPO_PUBLIC_STAGE === 'prod',
-
-    // Debug
-    DEBUG: process.env.EXPO_DEBUG === 'true',
-
-    // URLs de API según plataforma
+    STAGE: getEnvVar('EXPO_PUBLIC_STAGE', 'dev') || 'dev',
+    IS_DEV: (getEnvVar('EXPO_PUBLIC_STAGE', 'dev') || 'dev') === 'dev',
+    IS_PROD: getEnvVar('EXPO_PUBLIC_STAGE') === 'prod',
+    DEBUG: getEnvVar('EXPO_DEBUG') === 'true',
+    ENV, // aws | local
     API: {
-        GATEWAY_URL: getGatewayUrl(), // API Gateway (NGINX en puerto 80)
-        BASE_URL: getApiUrl(), // DEPRECATED: Mantener por compatibilidad
-        AUTH_URL: getAuthApiUrl(), // DEPRECATED: Mantener por compatibilidad
-        TIMEOUT: 10000, // 10 segundos
+        GATEWAY_URL: resolveGatewayUrl(),
+        // DEPRECATED: mantener por compatibilidad en logs/componentes antiguos
+        BASE_URL: resolveGatewayUrl(),
+        AUTH_URL: resolveGatewayUrl(),
+        TIMEOUT: 10000,
     },
-
-    // Configuración de autenticación
     AUTH: {
         TOKEN_KEY: 'auth_token',
         REFRESH_TOKEN_KEY: 'refresh_token',
     },
-
-    // Configuración de la app
     APP: {
         NAME: 'MediSupply',
         VERSION: '1.0.0',
     }
 };
 
-/**
- * URLs de fallback para Android (diferentes configuraciones de red)
- * Incluyen puerto 80 para el API Gateway
- */
-const ANDROID_FALLBACK_URLS = [
-    'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com', // AWS ALB (puerto 80 por defecto)
-    'http://10.0.2.2:80',      // Emulador Android estándar (puerto 80)
-    'http://localhost:80',     // Localhost (solo para web)
-    'http://127.0.0.1:80'      // IP loopback (solo para web)
-];
-
-/**
- * Obtiene la URL del API Gateway (AWS ALB o NGINX local) según la plataforma y entorno
- * El API Gateway enruta a todos los servicios desde un único punto de entrada
- * 
- * IMPORTANTE: Todas las peticiones deben pasar por el gateway
- * - AWS ALB: usa puerto 80 por defecto (HTTP), no requiere especificar puerto
- * - Desarrollo local: puede usar puerto 80 explícito (ej: http://192.168.10.5:80)
- * 
- * El gateway enruta según el path:
- *   - /api/v1/auth/*       → auth-service:8004
- *   - /api/v1/users/*      → user-service:8001
- *   - /api/v1/validate/*   → nit-validation-service:8002
- *   - /api/v1/audits/*     → audit-service:8003
- */
-function getGatewayUrl(): string {
-    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
-
-    if (stage === 'prod') {
-        return process.env.EXPO_PUBLIC_GATEWAY_URL || 'https://api.medisupply.com';
-    }
-
-    // Si hay URL específica en variables de entorno, usarla
-    if (process.env.EXPO_PUBLIC_GATEWAY_URL) {
-        let url = process.env.EXPO_PUBLIC_GATEWAY_URL;
-        // Si no tiene puerto y no es un dominio AWS, agregar :80
-        // Los dominios AWS (.elb.amazonaws.com) usan puerto 80 por defecto sin especificarlo
-        if (!url.match(/:\d+$/) && !url.includes('.elb.amazonaws.com')) {
-            url = `${url}:80`;
-        }
-        return url;
-    }
-
-    // Desarrollo: usar URL específica por plataforma para el API Gateway (puerto 80)
-    switch (Platform.OS) {
-        case 'ios':
-            // iOS Simulator - AWS ALB por defecto
-            const iosUrl = process.env.EXPO_PUBLIC_GATEWAY_URL_IOS || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com';
-            // Asegurar que tenga puerto solo si no es dominio AWS
-            if (iosUrl.includes('.elb.amazonaws.com')) {
-                return iosUrl;
-            }
-            return iosUrl.match(/:\d+$/) ? iosUrl : `${iosUrl}:80`;
-        case 'android':
-            // Android Emulator - AWS ALB por defecto
-            // Android físico usa AWS ALB
-            const androidUrl = process.env.EXPO_PUBLIC_GATEWAY_URL_ANDROID || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com';
-            // Asegurar que tenga puerto solo si no es dominio AWS
-            if (androidUrl.includes('.elb.amazonaws.com')) {
-                return androidUrl;
-            }
-            return androidUrl.match(/:\d+$/) ? androidUrl : `${androidUrl}:80`;
-        default:
-            return 'http://localhost:80';
-    }
-}
-
-/**
- * Obtiene la URL de la API según la plataforma y entorno
- */
-function getApiUrl(): string {
-    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
-
-    if (stage === 'prod') {
-        return process.env.EXPO_PUBLIC_API_URL || 'https://api.medisupply.com';
-    }
-
-    // Si hay URL específica en variables de entorno, usarla
-    if (process.env.EXPO_PUBLIC_API_URL) {
-        return process.env.EXPO_PUBLIC_API_URL;
-    }
-
-    // Desarrollo: usar URL específica por plataforma para el user-service
-    switch (Platform.OS) {
-        case 'ios':
-            return process.env.EXPO_PUBLIC_API_URL_IOS || 'http://192.168.101.78';
-        case 'android':
-            return process.env.EXPO_PUBLIC_API_URL_ANDROID || 'http://10.0.2.2';
-        default:
-            return 'http://localhost';
-    }
-}
-
-/**
- * Obtiene la URL del Auth Service según la plataforma y entorno
- */
-function getAuthApiUrl(): string {
-    const stage = process.env.EXPO_PUBLIC_STAGE || 'dev';
-
-    if (stage === 'prod') {
-        return process.env.EXPO_PUBLIC_AUTH_URL || 'https://auth.medisupply.com';
-    }
-
-    // Si hay URL específica en variables de entorno, usarla
-    if (process.env.EXPO_PUBLIC_AUTH_URL) {
-        return process.env.EXPO_PUBLIC_AUTH_URL;
-    }
-
-    // Desarrollo: usar URL específica por plataforma para el auth-service
-    switch (Platform.OS) {
-        case 'ios':
-            return process.env.EXPO_PUBLIC_AUTH_URL_IOS || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com';
-        case 'android':
-            return process.env.EXPO_PUBLIC_AUTH_URL_ANDROID || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com';
-        default:
-            return 'http://localhost';
-    }
-}
-
-/**
- * Utilidad para logging de configuración (solo en desarrollo)
- */
-export const logConfig = () => {
-    if (!CONFIG.IS_DEV) return;
-
-    console.log('=== CONFIGURACIÓN DE LA APP ===');
-    console.log('🚀 Entorno:', CONFIG.STAGE);
-    console.log('📱 Plataforma:', Platform.OS);
-    console.log('🌐 Gateway URL:', CONFIG.API.GATEWAY_URL);
-    console.log('🌐 API URL (deprecated):', CONFIG.API.BASE_URL);
-    console.log('🌐 Auth URL (deprecated):', CONFIG.API.AUTH_URL);
-    console.log('🐛 Debug:', CONFIG.DEBUG);
-    console.log('📋 Variables de entorno:');
-    console.log('   EXPO_PUBLIC_STAGE:', process.env.EXPO_PUBLIC_STAGE);
-    console.log('   EXPO_PUBLIC_GATEWAY_URL:', process.env.EXPO_PUBLIC_GATEWAY_URL);
-    console.log('   EXPO_PUBLIC_GATEWAY_URL_IOS:', process.env.EXPO_PUBLIC_GATEWAY_URL_IOS);
-    console.log('   EXPO_PUBLIC_GATEWAY_URL_ANDROID:', process.env.EXPO_PUBLIC_GATEWAY_URL_ANDROID);
-    console.log('================================');
+// Endpoints base derivados (para uso optativo)
+export const ENDPOINTS = {
+    AUTH_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/auth`,
+    USERS_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/users`,
+    CLIENTES_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/clientes`,
+    PEDIDOS_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/pedidos`,
+    ENTREGAS_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/entregas`,
+    RUTAS_BASE: `${CONFIG.API.GATEWAY_URL}/api/v1/rutas-visitas`,
 };
 
-// Log automático de configuración al cargar el módulo (solo en desarrollo)
-if (process.env.EXPO_PUBLIC_STAGE === 'dev' || !process.env.EXPO_PUBLIC_STAGE) {
-    // Usar setTimeout para asegurar que Platform.OS esté disponible
+/**
+ * Registra la configuración actual de la aplicación
+ * Útil para debugging y verificar qué gateway se está usando
+ */
+export const logConfig = () => {
+    if (!CONFIG.IS_DEV && !CONFIG.DEBUG) return;
+    try {
+        console.log('=== CONFIGURACIÓN DE LA APP ===');
+        console.log('🚀 Entorno:', CONFIG.STAGE);
+        console.log('🌍 Runtime ENV:', CONFIG.ENV, `(${CONFIG.ENV === 'aws' ? 'AWS Gateway' : 'Local Gateway'})`);
+        console.log('📱 Plataforma:', Platform.OS);
+        console.log('🌐 Gateway API URL:', CONFIG.API.GATEWAY_URL);
+        console.log('🐛 Debug:', CONFIG.DEBUG);
+        console.log('📋 Variables de entorno:');
+        console.log('   EXPO_PUBLIC_ENV:', getEnvVar('EXPO_PUBLIC_ENV') || '(no definida, usando: aws)');
+        console.log('   EXPO_PUBLIC_LOCAL_GATEWAY_URL:', getEnvVar('EXPO_PUBLIC_LOCAL_GATEWAY_URL') || '(no definida, usando: http://192.168.10.5:80)');
+        console.log('');
+        console.log('ℹ️  NOTA: Las configuraciones de Expo packager (REACT_NATIVE_PACKAGER_HOSTNAME,');
+        console.log('   EXPO_PACKAGER_HOST) siempre usan tu IP local y NO cambian con EXPO_PUBLIC_ENV');
+        console.log('================================');
+    } catch (e) {
+        // Silently fail if logging fails
+    }
+};
+
+const stage = getEnvVar('EXPO_PUBLIC_STAGE', 'dev');
+if (stage === 'dev' || !stage) {
     setTimeout(() => {
         logConfig();
     }, 100);
@@ -186,62 +131,54 @@ if (process.env.EXPO_PUBLIC_STAGE === 'dev' || !process.env.EXPO_PUBLIC_STAGE) {
 
 /**
  * Valida que las variables de entorno requeridas estén configuradas
+ * 
+ * NOTA: No valida variables de desarrollo de Expo (packager hostname)
+ *       porque estas siempre deben estar en .env apuntando a IP local
  */
 export const validateEnvVars = () => {
-    const required = [
-        'EXPO_PUBLIC_STAGE'
-    ];
+    try {
+        const requiredBase = ['EXPO_PUBLIC_STAGE'];
+        const missingBase = requiredBase.filter((k) => !getEnvVar(k));
 
-    const missing = required.filter(key => !process.env[key]);
+        const envMode: RuntimeEnv = ((getEnvVar('EXPO_PUBLIC_ENV') as RuntimeEnv) || 'aws') as RuntimeEnv;
+        
+        // Para local, EXPO_PUBLIC_LOCAL_GATEWAY_URL es opcional (tiene fallback)
+        // Para aws, no requiere variables adicionales (usa hardcoded ALB)
+        const missingByEnv: string[] = [];
 
-    if (missing.length > 0) {
-        console.warn('⚠️ Variables de entorno faltantes:', missing);
+        const missing = [...missingBase, ...missingByEnv];
+        if (missing.length > 0) {
+            console.warn('⚠️ Variables de entorno faltantes:', missing);
+        }
+        return missing.length === 0;
+    } catch (e) {
+        return false;
     }
-
-    return missing.length === 0;
 };
 
-/**
- * Obtiene URLs alternativas para Android en caso de fallo de conexión
- */
-export const getAndroidFallbackUrls = (): string[] => {
-    return ANDROID_FALLBACK_URLS;
-};
-
-/**
- * Prueba la conectividad con una URL específica
- */
 export const testApiConnection = async (url: string): Promise<boolean> => {
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-
-        // Intentar con diferentes endpoints
-        const endpoints = ['/health', '/', '/register'];
-
+        const endpoints = ['/health', '/', '/api/health'];
         for (const endpoint of endpoints) {
             try {
                 const response = await fetch(`${url}${endpoint}`, {
                     method: 'GET',
                     signal: controller.signal,
-                    headers: {
-                        'Accept': 'application/json',
-                    },
+                    headers: { 'Accept': 'application/json' },
                 });
-
                 clearTimeout(timeoutId);
-                if (response.ok || response.status === 405) { // 405 = Method Not Allowed es OK para algunos endpoints
+                if (response.ok || response.status === 405) {
                     return true;
                 }
-            } catch (endpointError) {
-                // Continuar con el siguiente endpoint
+            } catch {
                 continue;
             }
         }
-
         clearTimeout(timeoutId);
         return false;
-    } catch (error) {
+    } catch {
         return false;
     }
 };
