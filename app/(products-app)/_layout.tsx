@@ -33,8 +33,13 @@ const CheckAuthenticationLayout = () => {
   }, [pathname]);
 
   useEffect(() => {
-    console.log('📱 [Layout] Verificando estado de autenticación...');
-    checkStatus();
+    // Solo verificar estado si no estamos ya autenticados
+    if (status === 'checking') {
+      console.log('📱 [Layout] Verificando estado de autenticación...');
+      checkStatus();
+    } else if (status === 'authenticated' && user) {
+      console.log('📱 [Layout] Ya autenticado, saltando verificación');
+    }
   }, []);
 
   useEffect(() => {

@@ -11,6 +11,7 @@
  */
 
 import { CONFIG } from '@/constants/config';
+import { SecureStorageAdapter } from '@/helpers/adapters/secure-storage.adapter';
 import axios from 'axios';
 import { 
   Cliente, 
@@ -21,9 +22,9 @@ import {
 
 /**
  * Cliente Axios configurado para peticiones de clientes
- * Base URL: API Gateway (puerto 80)
+ * Base URL: API Gateway (AWS ALB)
  * 
- * Nota: El backend cliente-service NO requiere autenticación en modo desarrollo
+ * IMPORTANTE: En AWS, el servicio requiere autenticación con token JWT
  */
 const clientesApi = axios.create({
   baseURL: CONFIG.API.GATEWAY_URL,
@@ -31,6 +32,19 @@ const clientesApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+/**
+ * Interceptor para agregar token JWT automáticamente a todas las peticiones
+ */
+clientesApi.interceptors.request.use(async (config) => {
+  const token = await SecureStorageAdapter.getItem('token');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
 });
 
 /**

@@ -129,8 +129,23 @@ export default function NewOrderModal({
     try {
       const productsData = await getProductsMock();
       setProducts(productsData);
-    } catch (error) {
-      Alert.alert(t('common.error'), t('orders.newOrder.errors.loadProducts'));
+    } catch (error: any) {
+      // Mostrar mensaje de error más específico
+      const errorMessage = error?.message || t('orders.newOrder.errors.loadProducts');
+      Alert.alert(
+        t('common.error'), 
+        errorMessage,
+        [
+          {
+            text: t('common.retry'),
+            onPress: () => loadProducts(),
+          },
+          {
+            text: t('common.cancel'),
+            style: 'cancel',
+          },
+        ]
+      );
       console.error('Error loading products:', error);
     } finally {
       setIsLoadingProducts(false);
@@ -349,8 +364,49 @@ export default function NewOrderModal({
         ]
       );
     } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || t('orders.newOrder.errors.createOrder'));
-      setCurrentStep('resumen');
+      // Manejar errores de stock insuficiente con detalles por producto
+      if (error.errorCode === 'INVENTARIO_INSUFICIENTE' || 
+          error.errorCode === 'OUT_OF_STOCK' || 
+          error.errorCode === 'STOCK_INSUFFICIENT') {
+        
+        // Construir mensaje detallado
+        let mensajeDetallado = error.message || t('orders.newOrder.errors.insufficientStock');
+        
+        // Si hay validaciones con detalles por producto, agregarlos
+        if (error.validaciones && Array.isArray(error.validaciones)) {
+          const productosConError = error.validaciones
+            .filter((v: any) => !v.disponible)
+            .map((v: any) => {
+              // Buscar el nombre del producto en el carrito
+              const itemEnCarrito = cartItems.find(item => item.productoId === v.producto_id);
+              const nombreProducto = itemEnCarrito?.nombre || v.producto_id?.substring(0, 8) || 'Producto';
+              return `${nombreProducto}: ${v.cantidad_disponible} disponible, ${v.cantidad_solicitada} solicitado`;
+            });
+          
+          if (productosConError.length > 0) {
+            mensajeDetallado = `${t('orders.newOrder.errors.insufficientStock')}\n\n${productosConError.join('\n')}`;
+          }
+        }
+        
+        Alert.alert(
+          t('orders.newOrder.errors.insufficientStock'),
+          mensajeDetallado,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Recargar productos para actualizar stock mostrado
+                loadProducts();
+                setCurrentStep('productos');
+              },
+            },
+          ]
+        );
+      } else {
+        // Otros errores
+        Alert.alert(t('common.error'), error.message || t('orders.newOrder.errors.createOrder'));
+        setCurrentStep('resumen');
+      }
     } finally {
       setIsSubmitting(false);
     }
