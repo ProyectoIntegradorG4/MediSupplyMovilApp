@@ -99,7 +99,7 @@
       "loadFailed": "Error al cargar clientes"
     },
     "actions": {
-      "registerVisit": "Registrar Visita"
+      "registerVisit": "Registro Visitas"
     },
     "card": {
       "updated": "Actualizado",
@@ -354,6 +354,93 @@
     },
     "searchBar": {
       "placeholder": "Buscar"
+    }
+  },
+  "visits": {
+    "form": {
+      "title": "Registrar Visita",
+      "client": "Cliente",
+      "date": "Fecha",
+      "time": "Hora",
+      "contactoNombre": "Persona contactada",
+      "contactoNombrePlaceholder": "Nombre del contacto",
+      "tipoVisita": "Tipo de Visita",
+      "tipoVisitaPlaceholder": "Seleccionar tipo de Visita",
+      "objetivoVisita": "Propósito de la Visita",
+      "objetivoVisitaPlaceholder": "Describe el Propósito",
+      "observaciones": "Observaciones y Comentarios",
+      "observacionesPlaceholder": "Documentas las observaciones y comentarios relacionados a la evidencia adjunta",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "addEvidence": "Agregar Evidencia",
+      "tipos": {
+        "Seguimiento": "Seguimiento",
+        "Presentación": "Presentación",
+        "Soporte técnico": "Soporte técnico",
+        "Reunión comercial": "Reunión comercial",
+        "Capacitación": "Capacitación",
+        "Otro": "Otro"
+      }
+    },
+    "errors": {
+      "contactoNombreRequired": "La persona contactada es obligatoria",
+      "tipoVisitaRequired": "El tipo de visita es obligatorio",
+      "objetivoVisitaRequired": "El propósito de la visita es obligatorio",
+      "createFailed": "Error al registrar la visita",
+      "loadFailed": "Error al cargar la visita",
+      "networkError": "No se pudo registrar la visita. Revisa tu conexión e inténtalo de nuevo."
+    },
+    "success": {
+      "visitCreated": "Visita registrada exitosamente",
+      "visitCreatedMessage": "La visita ha sido registrada correctamente. ¿Deseas agregar evidencia ahora?",
+      "visitCreatedNoEvidence": "La visita ha sido registrada correctamente"
+    },
+    "detail": {
+      "title": "Detalle de Visita",
+      "date": "Fecha",
+      "time": "Hora",
+      "contacto": "Persona contactada",
+      "tipo": "Tipo de visita",
+      "objetivo": "Propósito",
+      "observaciones": "Observaciones",
+      "evidencias": "Evidencia de la visita",
+      "addEvidence": "Agregar evidencia",
+      "noEvidences": "No hay evidencias",
+      "processing": "Procesando...",
+      "completed": "Completado",
+      "error": "Error en procesamiento"
+    },
+    "evidence": {
+      "title": "Agregar Evidencia",
+      "takePhoto": "Tomar foto",
+      "recordVideo": "Grabar video",
+      "chooseFromGallery": "Elegir de galería",
+      "comment": "Comentario de Recomendación",
+      "commentPlaceholder": "Describe la recomendación relacionada a esta evidencia",
+      "commentRequired": "El comentario es obligatorio",
+      "upload": "Subir evidencia",
+      "uploading": "Subiendo...",
+      "fileRequired": "Debes seleccionar un archivo",
+      "uploadSuccess": "Evidencia registrada. Procesamiento en curso.",
+      "uploadFailed": "No se pudo subir la evidencia. Revisa tu conexión e inténtalo de nuevo.",
+      "fileTooLarge": "El archivo es demasiado grande. Máximo 15MB."
+    },
+    "recommendations": {
+      "title": "Recomendaciones",
+      "noRecommendations": "Aún no hay recomendaciones disponibles",
+      "processing": "Las recomendaciones están siendo procesadas",
+      "share": "Compartir recomendaciones",
+      "priority": {
+        "alta": "Alta",
+        "media": "Media",
+        "baja": "Baja"
+      }
+    },
+    "list": {
+      "title": "Registro de Visitas",
+      "noVisits": "No hay visitas registradas",
+      "loading": "Cargando visitas...",
+      "addNew": "Nueva Visita"
     }
   }
 }

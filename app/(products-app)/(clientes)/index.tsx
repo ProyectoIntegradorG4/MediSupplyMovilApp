@@ -5,6 +5,7 @@ import { ThemedText } from '@/presentation/theme/components/ThemedText';
 import { ThemedView } from '@/presentation/theme/components/ThemedView';
 import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, View, ActivityIndicator, RefreshControl, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { fetchClientesDeGerente } from '@/core/clientes/actions/clientes-actions';
 import { Cliente } from '@/core/clientes/interface/cliente';
 import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
@@ -12,6 +13,7 @@ import { useTranslation } from '@/presentation/i18n/hooks/useTranslation';
 const ClientesScreen = () => {
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const router = useRouter();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,9 +77,9 @@ const ClientesScreen = () => {
       cliente.tipo_institucion.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const handleRegisterVisit = (clientName: string) => {
-    console.log(`Registrar visita para: ${clientName}`);
-    // TODO: Implementar navegación a pantalla de registro de visita
+  const handleViewVisits = (cliente: Cliente) => {
+    console.log(`Ver visitas de: ${cliente.nombre_comercial}`);
+    router.push(`/(products-app)/(clientes)/${cliente.cliente_id}/visits`);
   };
 
   return (
@@ -157,7 +159,7 @@ const ClientesScreen = () => {
                 <ClientCard
                   key={cliente.cliente_id}
                   cliente={cliente}
-                  onRegisterVisit={() => handleRegisterVisit(cliente.nombre_comercial)}
+                  onRegisterVisit={() => handleViewVisits(cliente)}
                 />
               ))
             ) : (

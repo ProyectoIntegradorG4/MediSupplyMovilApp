@@ -33,8 +33,13 @@ const CheckAuthenticationLayout = () => {
   }, [pathname]);
 
   useEffect(() => {
-    console.log('📱 [Layout] Verificando estado de autenticación...');
-    checkStatus();
+    // Solo verificar estado si no estamos ya autenticados
+    if (status === 'checking') {
+      console.log('📱 [Layout] Verificando estado de autenticación...');
+      checkStatus();
+    } else if (status === 'authenticated' && user) {
+      console.log('📱 [Layout] Ya autenticado, saltando verificación');
+    }
   }, []);
 
   useEffect(() => {
@@ -90,6 +95,9 @@ const CheckAuthenticationLayout = () => {
       >
         <Stack.Screen name="(home)/index" />
         <Stack.Screen name="(clientes)/index" />
+        <Stack.Screen name="(clientes)/register-visit" />
+        <Stack.Screen name="(clientes)/[clienteId]/visits" />
+        <Stack.Screen name="(visits)/[visitId]" />
         <Stack.Screen name="(pedidos)/index" />
         <Stack.Screen name="(rutas)/index" />
         <Stack.Screen name="(entregas)/index" />

@@ -4616,6 +4616,11 @@ expo-asset@~12.0.8:
     "@expo/image-utils" "^0.8.7"
     expo-constants "~18.0.8"
 
+expo-av@~16.0.5:
+  version "16.0.7"
+  resolved "https://registry.yarnpkg.com/expo-av/-/expo-av-16.0.7.tgz#51668b335e3a460ca712a281d7138341119ebe26"
+  integrity sha512-QReef6/RYuZ4GekTcZZw5zY26pcPOmHqK6LMgFlPhnsT0ga97HJrgMc63pvIiojDP+q4oIv24g+QPD8ljZu4XQ==
+
 expo-constants@~18.0.7, expo-constants@~18.0.8:
   version "18.0.8"
   resolved "https://registry.npmjs.org/expo-constants/-/expo-constants-18.0.8.tgz"
@@ -4640,6 +4645,18 @@ expo-haptics@~15.0.6:
   version "15.0.6"
   resolved "https://registry.npmjs.org/expo-haptics/-/expo-haptics-15.0.6.tgz"
   integrity sha512-Unns//atxLq4UkDrgvwNpzOB2pm6hPS1nhZVL8BIfOebU/++JQlKJYPam4sRn7w/vMbRYpJ8BmC96mRs3QR0Tg==
+
+expo-image-loader@~6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/expo-image-loader/-/expo-image-loader-6.0.0.tgz#15230442cbb90e101c080a4c81e37d974e43e072"
+  integrity sha512-nKs/xnOGw6ACb4g26xceBD57FKLFkSwEUTDXEDF3Gtcu3MqF3ZIYd3YM+sSb1/z9AKV1dYT7rMSGVNgsveXLIQ==
+
+expo-image-picker@~17.0.8:
+  version "17.0.8"
+  resolved "https://registry.yarnpkg.com/expo-image-picker/-/expo-image-picker-17.0.8.tgz#c4430994de81f3e9995c9ce77cb76403213b17d7"
+  integrity sha512-489ByhVs2XPoAu9zodivAKLv7hG4S/FOe8hO/C2U6jVxmRjpAKakKNjMml0IwWjf1+c/RYBqm1XxKaZ+vq/fDQ==
+  dependencies:
+    expo-image-loader "~6.0.0"
 
 expo-image@~3.0.7:
   version "3.0.7"
@@ -4718,6 +4735,11 @@ expo-secure-store@^15.0.6:
   version "15.0.6"
   resolved "https://registry.npmjs.org/expo-secure-store/-/expo-secure-store-15.0.6.tgz"
   integrity sha512-jzCsjnoMJYuRFxb4oHlwQY71WFIiOFiqQlvtay3Ct6OoKugR3/qjBwkcBoDsr1LsbFBVEkOMEU2i59peBMG1Jg==
+
+expo-sharing@~14.0.7:
+  version "14.0.7"
+  resolved "https://registry.yarnpkg.com/expo-sharing/-/expo-sharing-14.0.7.tgz#64845ea569c725a9a32705be7ef772e556134e1c"
+  integrity sha512-t/5tR8ZJNH6tMkHXlF7453UafNIfrpfTG+THN9EMLC4Wsi4bJuESPm3NdmWDg2D4LDALJI/LQo0iEnLAd5Sp4g==
 
 expo-splash-screen@~31.0.8:
   version "31.0.8"

@@ -57,12 +57,20 @@ async function main() {
   });
   console.log();
 
-  // URLs a probar
+  // Resolver Gateway según .env
+  const ENV = (process.env.EXPO_PUBLIC_ENV || 'aws').toLowerCase();
+  const gateway =
+    ENV === 'aws'
+      ? (process.env.EXPO_PUBLIC_GATEWAY_URL || 'http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com')
+      : (process.env.EXPO_PUBLIC_LOCAL_GATEWAY_URL || 'http://192.168.10.5:80');
+
+  // Endpoints a probar en el gateway
   const urlsToTest = [
-    'http://localhost:8001',
-    'http://127.0.0.1:8001',
-    'http://10.0.2.2:8001',
-    ...networkInfo.map(info => `http://${info.address}:8001`)
+    `${gateway}/`,
+    `${gateway}/health`,
+    `${gateway}/api/health`,
+    `${gateway}/api/v1/auth/health`,
+    `${gateway}/api/v1/users/health`,
   ];
 
   console.log('🔗 Probando conectividad con URLs:');
@@ -77,20 +85,18 @@ async function main() {
   }
 
   console.log('\n📋 Recomendaciones:');
-  console.log('   1. Para Android Emulator: usar http://10.0.2.2:8001');
-  console.log('   2. Para Android físico: usar la IP de tu máquina');
-  console.log('   3. Para iOS Simulator: usar http://localhost:8001');
-  console.log('   4. Para web: usar http://localhost:8001');
+  console.log('   1. Verifica EXPO_PUBLIC_ENV=aws|local en tu .env');
+  console.log('   2. Para local, usa EXPO_PUBLIC_LOCAL_GATEWAY_URL con tu IP y puerto 80');
+  console.log('   3. Para AWS, usa EXPO_PUBLIC_GATEWAY_URL sin puerto explícito');
+  console.log('   4. En Android físico, asegúrate de que el dispositivo está en la misma red');
   
   if (networkInfo.length > 0) {
     console.log(`\n💡 IP recomendada para dispositivos físicos: ${networkInfo[0].address}`);
   }
   
   console.log('\n🔧 Comandos útiles:');
-  console.log('   # Para Android Emulator (ADB reverse):');
-  console.log('   adb reverse tcp:8001 tcp:8001');
-  console.log('\n   # Para verificar puertos abiertos:');
-  console.log('   netstat -an | grep 8001');
+  console.log('   # Verificar reachability del gateway:');
+  console.log('   curl -i ' + gateway + '/health');
 }
 
 main().catch(console.error);

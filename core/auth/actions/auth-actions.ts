@@ -59,7 +59,7 @@ const returnUserToken = (
 /**
  * Inicia sesión con email y contraseña
  * 
- * Endpoint usado: POST /api/v1/auth/login
+ * Endpoint usado: POST /api/v1/login
  * 
  * @param email Email del usuario
  * @param password Contraseña del usuario
@@ -102,12 +102,16 @@ export const authCheckStatus = async () => {
       return null;
     }
 
-    const data = await verifyToken(token);
+    console.log('🔍 [Auth] Verificando token...');
+    console.log('   Token (primeros 20 chars):', token.substring(0, 20) + '...');
+    
+    try {
+      const data = await verifyToken(token);
 
-    if (!data.valid) {
-      console.log('⚠️ Token no válido');
-      return null;
-    }
+      if (!data.valid) {
+        console.log('⚠️ Token no válido - respuesta del servidor indica token inválido');
+        return null;
+      }
 
     console.log('✅ Token válido:', {
       user_id: data.user_id,
@@ -155,12 +159,39 @@ export const authCheckStatus = async () => {
       };
     }
 
-    return {
-      user,
-      token,
-    };
-  } catch (error) {
-    console.log('❌ Auth check status error:', error);
+      return {
+        user,
+        token,
+      };
+    } catch (verifyError: any) {
+      console.error('❌ Error al verificar token:', verifyError);
+      if (verifyError.response) {
+        console.error('   Response status:', verifyError.response.status);
+        console.error('   Response data:', verifyError.response.data);
+      }
+      // Si el error es 401 o 403, el token es inválido o expiró
+      if (verifyError.response?.status === 401 || verifyError.response?.status === 403) {
+        console.log('⚠️ Token inválido o expirado (401/403)');
+        return null;
+      }
+      // Para otros errores, también retornar null para evitar bloqueos
+      return null;
+    }
+  } catch (error: any) {
+    console.error('❌ Auth check status error:', error);
+    if (error.response) {
+      console.error('   Response status:', error.response.status);
+      console.error('   Response data:', error.response.data);
+    }
+    if (error.message) {
+      console.error('   Error message:', error.message);
+    }
+    if (error.code) {
+      console.error('   Error code:', error.code);
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT') {
+        console.error('   ⚠️ Error de conectividad. Verifica la configuración de la URL base.');
+      }
+    }
     return null;
   }
 };

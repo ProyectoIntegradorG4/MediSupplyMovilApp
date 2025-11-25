@@ -20,12 +20,23 @@ export function useTranslation() {
   }, [locale, i18n, ready]);
 
   // Función de traducción segura que retorna la key si i18n no está listo
-  const safeT = (key: string, options?: any) => {
+  // Asegura que siempre retorne string, incluso si react-i18next retorna object
+  const safeT = (key: string, options?: any): string => {
     if (!ready) {
       console.warn('🌐 [useTranslation] i18n no está listo, retornando key:', key);
       return key;
     }
-    return t(key, options);
+    const result = t(key, options);
+    // Asegurar que siempre retorne string
+    if (typeof result === 'string') {
+      return result;
+    }
+    // Si retorna object (por ejemplo, cuando hay interpolación compleja), convertir a string
+    if (typeof result === 'object' && result !== null) {
+      return String(result);
+    }
+    // Fallback: retornar la key original
+    return key;
   };
 
   return {

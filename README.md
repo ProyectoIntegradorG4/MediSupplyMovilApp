@@ -257,21 +257,19 @@ ifconfig
 
 ### **📁 Configuración centralizada**
 
-El proyecto usa un sistema de variables de entorno flexible:
+Cambio de entorno con una sola variable:
 
 ```bash
 # .env (ejemplo)
-NODE_ENV=development
 EXPO_PUBLIC_STAGE=dev
+# Cambia SOLO esta variable para alternar
+EXPO_PUBLIC_ENV=aws # o local
 
-# Red local (ajustar según tu IP)
-LOCAL_IP=192.168.1.100
-API_PORT=3000
+# AWS (ALB - sin puerto explícito)
+EXPO_PUBLIC_GATEWAY_URL=http://medisupply-alb-656658498.us-east-1.elb.amazonaws.com
 
-# URLs automáticas por plataforma
-EXPO_PUBLIC_API_URL=http://localhost:3000/api
-EXPO_PUBLIC_API_URL_ANDROID=http://192.168.1.100:3000/api
-EXPO_PUBLIC_API_URL_IOS=http://192.168.1.100:3000/api
+# Local (NGINX/gateway en puerto 80)
+EXPO_PUBLIC_LOCAL_GATEWAY_URL=http://192.168.10.5:80
 ```
 
 ### **🎯 Configuración por entorno**
@@ -279,8 +277,9 @@ EXPO_PUBLIC_API_URL_IOS=http://192.168.1.100:3000/api
 | Variable | Desarrollo | Producción |
 |----------|------------|------------|
 | `EXPO_PUBLIC_STAGE` | `dev` | `prod` |
-| `EXPO_DEBUG` | `true` | `false` |
-| `API_URL` | IP local | Dominio real |
+| `EXPO_PUBLIC_ENV` | `local` o `aws` | `aws` |
+| `EXPO_PUBLIC_LOCAL_GATEWAY_URL` | IP local con puerto 80 | n/a |
+| `EXPO_PUBLIC_GATEWAY_URL` | ALB opcional | ALB/dominio público |
 
 ### **📋 Cambiar configuración**
 
@@ -432,6 +431,36 @@ npx expo --version
 ---
 
 ## 🚀 Despliegue
+
+### **📱 Build para Testing - Generar APK**
+
+> **📖 Manual Completo:** Consulta el [Manual de Build APK](./MANUAL_BUILD_APK.md) para una guía detallada paso a paso.
+
+**Métodos disponibles:**
+
+1. **EAS Build (Recomendado)** - Build en la nube, sin necesidad de Android Studio
+   ```bash
+   # Verificar configuración primero
+   yarn build:apk:check
+   
+   # Build con EAS
+   yarn build:apk:eas
+   ```
+
+2. **Build Local** - Requiere Android Studio configurado
+   ```bash
+   # Build local
+   yarn build:apk:local
+   ```
+
+3. **Script de Ayuda Interactivo**
+   ```bash
+   # Linux/macOS
+   bash ./scripts/build-apk.sh
+   
+   # Windows PowerShell
+   .\scripts\build-apk.ps1
+   ```
 
 ### **📱 Build para tiendas de aplicaciones**
 
